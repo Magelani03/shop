@@ -1,0 +1,289 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Lato:wght@300;400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        /* Organic Beauty Theme - Earthy Sage Green */
+        --background: 0 0% 100%;
+        --foreground: 0 0% 15%;
+
+        --card: 0 0% 100%;
+        --card-foreground: 0 0% 15%;
+
+        --popover: 0 0% 100%;
+        --popover-foreground: 0 0% 15%;
+
+        /* Sage Green Primary */
+        --primary: 110 12% 40%;
+        --primary-foreground: 0 0% 100%;
+
+        /* Light sage for secondary */
+        --secondary: 110 12% 92%;
+        --secondary-foreground: 110 12% 25%;
+
+        /* Muted sage tones */
+        --muted: 40 15% 94%;
+        --muted-foreground: 110 8% 45%;
+
+        /* Cream accent */
+        --accent: 40 30% 95%;
+        --accent-foreground: 110 12% 25%;
+
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 0 0% 100%;
+
+        --border: 110 10% 85%;
+        --input: 110 10% 85%;
+        --ring: 110 12% 40%;
+
+        --radius: 0.75rem;
+
+        /* Custom colors */
+        --sage: 110 12% 40%;
+        --sage-light: 110 12% 92%;
+        --sage-dark: 110 12% 30%;
+        --cream: 40 30% 95%;
+        --beige: 35 25% 90%;
+        --charcoal: 0 0% 15%;
+
+        /* Glassmorphism */
+        --glass-bg: 110 10% 50%;
+        --glass-border: 0 0% 100%;
+
+        /* Footer dark */
+        --footer-bg: 0 0% 0%;
+        --footer-foreground: 0 0% 100%;
+
+        /* Sidebar */
+        --sidebar-background: 110 12% 92%;
+        --sidebar-foreground: 110 12% 25%;
+        --sidebar-primary: 110 12% 40%;
+        --sidebar-primary-foreground: 0 0% 100%;
+        --sidebar-accent: 110 12% 85%;
+        --sidebar-accent-foreground: 110 12% 25%;
+        --sidebar-border: 110 10% 80%;
+        --sidebar-ring: 110 12% 40%;
+    }
+
+    .dark {
+        --background: 0 0% 8%;
+        --foreground: 0 0% 95%;
+
+        --card: 0 0% 12%;
+        --card-foreground: 0 0% 95%;
+
+        --popover: 0 0% 12%;
+        --popover-foreground: 0 0% 95%;
+
+        --primary: 110 15% 55%;
+        --primary-foreground: 0 0% 10%;
+
+        --secondary: 110 10% 20%;
+        --secondary-foreground: 0 0% 95%;
+
+        --muted: 110 10% 18%;
+        --muted-foreground: 110 8% 65%;
+
+        --accent: 110 10% 20%;
+        --accent-foreground: 0 0% 95%;
+
+        --destructive: 0 62.8% 30.6%;
+        --destructive-foreground: 0 0% 95%;
+
+        --border: 110 10% 20%;
+        --input: 110 10% 20%;
+        --ring: 110 15% 55%;
+
+        --sidebar-background: 0 0% 10%;
+        --sidebar-foreground: 0 0% 95%;
+        --sidebar-primary: 110 15% 55%;
+        --sidebar-primary-foreground: 0 0% 10%;
+        --sidebar-accent: 110 10% 18%;
+        --sidebar-accent-foreground: 0 0% 95%;
+        --sidebar-border: 110 10% 20%;
+        --sidebar-ring: 110 15% 55%;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground font-body antialiased;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        @apply font-display;
+    }
+}
+
+@layer components {
+    /* Glassmorphism card for auth */
+    .glass-card {
+        @apply backdrop-blur-md bg-sage/60 border border-white/20 rounded-2xl shadow-2xl;
+    }
+
+    /* Sidebar active state */
+    .sidebar-active {
+        @apply bg-white text-sage-dark font-medium rounded-lg;
+    }
+
+    /* Product card hover effect */
+    .product-card {
+        @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+    }
+
+    /* Footer section */
+    .footer-section {
+        @apply bg-charcoal text-white;
+    }
+}
+
+@layer utilities {
+    .font-display {
+        font-family: "Playfair Display", serif;
+    }
+
+    .font-body {
+        font-family: "Lato", sans-serif;
+    }
+
+    /* Text colors using custom vars */
+    .text-sage {
+        color: hsl(var(--sage));
+    }
+
+    .text-sage-dark {
+        color: hsl(var(--sage-dark));
+    }
+
+    .bg-sage {
+        background-color: hsl(var(--sage));
+    }
+
+    .bg-sage-light {
+        background-color: hsl(var(--sage-light));
+    }
+
+    .bg-sage-dark {
+        background-color: hsl(var(--sage-dark));
+    }
+
+    .bg-cream {
+        background-color: hsl(var(--cream));
+    }
+
+    .bg-beige {
+        background-color: hsl(var(--beige));
+    }
+
+    .bg-charcoal {
+        background-color: hsl(var(--charcoal));
+    }
+
+    .border-sage {
+        border-color: hsl(var(--sage));
+    }
+
+    /* Enhanced animations */
+    .animate-float {
+        animation: float 3s ease-in-out infinite;
+    }
+
+    .animate-pulse-gentle {
+        animation: pulse-gentle 2s ease-in-out infinite;
+    }
+
+    /* Text effects */
+    .text-gradient {
+        background: linear-gradient(
+            135deg,
+            hsl(var(--sage)),
+            hsl(var(--sage-dark))
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* Loading states */
+    .skeleton {
+        animation: skeleton-loading 1.5s ease-in-out infinite;
+        background: linear-gradient(
+            90deg,
+            hsl(var(--muted)) 25%,
+            hsl(var(--muted-foreground)) 50%,
+            hsl(var(--muted)) 75%
+        );
+        background-size: 200% 100%;
+    }
+}
+
+/* Additional keyframes for enhanced animations */
+@keyframes float {
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+@keyframes pulse-gentle {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Smooth scroll behavior */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Enhanced focus states */
+*:focus {
+    outline: 2px solid hsl(var(--sage));
+    outline-offset: 2px;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+    background: hsl(var(--sage));
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--sage-dark));
+}
