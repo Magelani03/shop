@@ -332,7 +332,7 @@ app.get("/api/settings", async (req, res) => {
 });
 
 // ADMIN ENDPOINTS
-app.use("/api/admin/*", authenticateToken, requireAdmin);
+app.use("/api/admin", authenticateToken, requireAdmin);
 
 // Admin Dashboard Stats
 app.get("/api/admin/stats", async (req, res) => {
