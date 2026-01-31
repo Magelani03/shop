@@ -12,17 +12,30 @@ enum Role {
   ADMIN
 }
 
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
 model Product {
-  id          Int      @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   name        String
   description String
   price       Decimal
-  rating      Float
+  rating      Float       @default(0)
   image       String
   category    String
-  discount    Int?     // percentage off, nullable
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  discount    Int?        // percentage off, nullable
+  stock       Int         @default(0)
+  featured    Boolean     @default(false)
+  active      Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orderItems  OrderItem[]
 }
 
 model User {
@@ -33,6 +46,48 @@ model User {
   avatar       String?
   passwordHash String
   role         Role     @default(USER)
+  address      String?
+  city         String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  orders       Order[]
+}
+
+model Order {
+  id          Int         @id @default(autoincrement())
+  userId      Int
+  user        User        @relation(fields: [userId], references: [id])
+  status      OrderStatus @default(PENDING)
+  total       Decimal
+  subtotal    Decimal
+  tax         Decimal     @default(0)
+  shipping    Decimal     @default(0)
+  customerName String
+  customerEmail String
+  customerPhone String
+  shippingAddress String
+  notes       String?
+  whatsappSent Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  orderItems  OrderItem[]
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Decimal // price at time of order
+  createdAt DateTime @default(now())
+}
+
+model Settings {
+  id            Int     @id @default(autoincrement())
+  key           String  @unique
+  value         String
+  description   String?
+  updatedAt     DateTime @updatedAt
 }

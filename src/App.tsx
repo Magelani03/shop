@@ -14,6 +14,11 @@ import Sales from "./pages/Sales";
 import Login from "./pages/Auth/Login";
 import SignUp from "./pages/Auth/SignUp";
 import NotFound from "./pages/NotFound";
+import Dashboard from "./pages/Admin/Dashboard";
+import AdminOrders from "./pages/Admin/Orders";
+import AdminProducts from "./pages/Admin/Products";
+import AdminUsers from "./pages/Admin/Users";
+import Analytics from "./pages/Admin/Analytics";
 
 const queryClient = new QueryClient();
 
@@ -34,7 +39,16 @@ const App = () => (
           <Route path="/sales" element={<Sales />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+
+          {/* Admin Routes */}
+          <Route path="/admin" element={<Dashboard />} />
+          <Route path="/admin/dashboard" element={<Dashboard />} />
+          <Route path="/admin/orders" element={<AdminOrders />} />
+          <Route path="/admin/products" element={<AdminProducts />} />
+          <Route path="/admin/products/new" element={<AdminProducts />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/analytics" element={<Analytics />} />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

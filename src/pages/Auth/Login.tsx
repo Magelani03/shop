@@ -1,27 +1,46 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { useUserStore } from '@/lib/store';
-import { toast } from 'sonner';
-import authBg from '@/assets/auth-bg.jpg';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { User, Mail, Lock } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/lib/store";
+import { toast } from "sonner";
+import authBg from "@/assets/auth-bg.jpg";
 
 const Login = () => {
   const navigate = useNavigate();
-  const login = useUserStore((state) => state.login);
+  const { login, user, isAdmin } = useAuthStore();
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(formData.email, formData.password)) {
-      toast.success('Welcome back!');
-      navigate('/');
-    } else {
-      toast.error('Please fill in all fields');
+    if (!formData.email || !formData.password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const success = await login(formData.email, formData.password);
+      if (success) {
+        toast.success("Welcome back!");
+        // Redirect admin users to admin dashboard
+        if (useAuthStore.getState().isAdmin()) {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/");
+        }
+      } else {
+        toast.error("Invalid email or password");
+      }
+    } catch (error) {
+      toast.error("Login failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -30,8 +49,8 @@ const Login = () => {
       className="min-h-screen flex items-center justify-center p-4"
       style={{
         backgroundImage: `url(${authBg})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        backgroundSize: "cover",
+        backgroundPosition: "center",
       }}
     >
       <div className="w-full max-w-md">
@@ -51,7 +70,9 @@ const Login = () => {
                 type="email"
                 placeholder="EMAIL"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 className="flex-1 bg-background/90 border-0 rounded-lg h-12 text-center font-medium placeholder:text-muted-foreground"
               />
               <div className="w-10 h-10 rounded-full bg-charcoal flex items-center justify-center flex-shrink-0">
@@ -65,7 +86,9 @@ const Login = () => {
                 type="password"
                 placeholder="PASSWORD"
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
                 className="flex-1 bg-background/90 border-0 rounded-lg h-12 text-center font-medium placeholder:text-muted-foreground"
               />
               <div className="w-10 h-10 rounded-full bg-charcoal flex items-center justify-center flex-shrink-0">
@@ -93,9 +116,10 @@ const Login = () => {
 
             <Button
               type="submit"
-              className="w-full h-12 bg-background/90 text-foreground hover:bg-background rounded-lg font-medium text-lg"
+              disabled={loading}
+              className="w-full h-12 bg-background/90 text-foreground hover:bg-background rounded-lg font-medium text-lg disabled:opacity-50"
             >
-              Login
+              {loading ? "Signing in..." : "Login"}
             </Button>
           </form>
         </div>

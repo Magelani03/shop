@@ -1,22 +1,27 @@
-import { Edit2, ChevronRight } from 'lucide-react';
-import SidebarLayout from '@/components/layout/SidebarLayout';
-import { useUserStore } from '@/lib/store';
+import { Edit2, ChevronRight } from "lucide-react";
+import SidebarLayout from "@/components/layout/SidebarLayout";
+import { useAuthStore } from "@/lib/store";
+import { Navigate } from "react-router-dom";
 
 const Profile = () => {
-  const user = useUserStore((state) => state.user);
-  const isAuthenticated = useUserStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
 
   const mockUser = {
-    name: user?.name || 'Stephanus Sylvanus',
-    displayName: 'Magelani',
-    email: user?.email || 'ssylvanus516@gmail.com',
-    phone: user?.phone || '+264815673978',
+    name: user?.name || "Stephanus Sylvanus",
+    displayName: "Magelani",
+    email: user?.email || "ssylvanus516@gmail.com",
+    phone: user?.phone || "+264815673978",
   };
 
   const menuItems = [
-    { name: 'Orders', count: 3 },
-    { name: 'History', count: 12 },
-    { name: 'Messages', count: 5 },
+    { name: "Orders", count: 3 },
+    { name: "History", count: 12 },
+    { name: "Messages", count: 5 },
   ];
 
   return (
@@ -35,7 +40,9 @@ const Profile = () => {
               </div>
               <div className="flex-1 space-y-2">
                 <div className="flex items-center justify-between">
-                  <h2 className="font-display text-2xl font-bold">{mockUser.displayName}</h2>
+                  <h2 className="font-display text-2xl font-bold">
+                    {mockUser.displayName}
+                  </h2>
                   <button className="p-2 hover:bg-sage-dark/20 rounded-lg transition-colors">
                     <Edit2 className="w-5 h-5" />
                   </button>

@@ -46,14 +46,14 @@ const Index = () => {
       {/* Enhanced Hero Section */}
       <section className="relative bg-gradient-to-br from-sage-light via-cream to-beige overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.3),transparent_50%)]" />
-        <div className="container py-16 md:py-24 relative">
+        <div className="container py-10 md:py-16 relative">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8 animate-fade-in">
               <div className="space-y-2">
                 <Badge variant="secondary" className="mb-4">
                   ✨ New Collection Available
                 </Badge>
-                <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight">
+                <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight">
                   Beauty Inspired
                   <br />
                   <span className="italic text-sage">by Real Life</span>

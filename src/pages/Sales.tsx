@@ -14,11 +14,11 @@ const Sales = () => {
         {/* Sale Banner */}
         <div className="relative bg-gradient-to-r from-primary to-sage-dark rounded-3xl overflow-hidden">
           <div className="absolute inset-0 bg-[url('/placeholder.svg')] opacity-10" />
-          <div className="relative p-8 md:p-12 text-center text-primary-foreground">
+          <div className="relative p-6 md:p-10 text-center text-primary-foreground">
             <span className="inline-block bg-destructive text-destructive-foreground text-sm font-bold px-4 py-1 rounded-full mb-4 animate-pulse">
               LIMITED TIME OFFER
             </span>
-            <h1 className="font-display text-4xl md:text-6xl font-bold mb-4">
+            <h1 className="font-display text-3xl md:text-5xl font-bold mb-4">
               Summer Sale
             </h1>
             <p className="text-xl md:text-2xl mb-2">
@@ -83,7 +83,7 @@ const Sales = () => {
             Don't Miss Out!
           </h2>
           <p className="text-primary-foreground/80 mb-6 max-w-lg mx-auto">
-            Subscribe to our newsletter and be the first to know about exclusive 
+            Subscribe to our newsletter and be the first to know about exclusive
             sales, new arrivals, and special offers.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">

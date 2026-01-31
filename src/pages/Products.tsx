@@ -22,7 +22,7 @@ const Products = () => {
     <SidebarLayout>
       <div className="p-6 space-y-8">
         {/* Hero Banner */}
-        <div className="relative rounded-2xl overflow-hidden h-64">
+        <div className="relative rounded-2xl overflow-hidden h-48 md:h-56">
           <img
             src={featuredProducts}
             alt="We have something for everyone"
@@ -30,7 +30,7 @@ const Products = () => {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-sage/80 to-transparent flex items-center p-8">
             <div className="text-primary-foreground max-w-md">
-              <h1 className="font-display text-3xl md:text-4xl font-bold italic leading-tight">
+              <h1 className="font-display text-2xl md:text-3xl font-bold italic leading-tight">
                 We Have something for Everyone
               </h1>
               <p className="mt-2 text-lg opacity-90">
@@ -46,11 +46,10 @@ const Products = () => {
             <button
               key={category}
               onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                selectedCategory === category
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedCategory === category
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-muted text-muted-foreground hover:bg-muted/80'
-              }`}
+                }`}
             >
               {category}
             </button>
