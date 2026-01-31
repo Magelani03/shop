@@ -1,3 +1,4 @@
+import { Product } from '@/lib/store';
 import bodyButter from '@/assets/products/body-butter.jpg';
 import serumOil from '@/assets/products/serum-oil.jpg';
 import candle from '@/assets/products/candle.jpg';
@@ -13,7 +14,9 @@ import creamJar from '@/assets/products/cream-jar.jpg';
 import whiteBottle from '@/assets/products/white-bottle.jpg';
 import lotionSet from '@/assets/products/lotion-set.jpg';
 
-export const products = [
+const now = new Date().toISOString();
+
+export const products: Product[] = [
   {
     id: 1,
     name: 'Body Butter - Summer Coconut',
@@ -22,6 +25,11 @@ export const products = [
     rating: 4.8,
     image: bodyButter,
     category: 'Body Care',
+    stock: 15,
+    featured: true,
+    active: true,
+    createdAt: now,
+    updatedAt: now,
   },
   {
     id: 2,
@@ -31,6 +39,11 @@ export const products = [
     rating: 4.9,
     image: serumOil,
     category: 'Face Care',
+    stock: 20,
+    featured: true,
+    active: true,
+    createdAt: now,
+    updatedAt: now,
   },
   {
     id: 3,
@@ -40,6 +53,11 @@ export const products = [
     rating: 4.7,
     image: candle,
     category: 'Home',
+    stock: 30,
+    featured: false,
+    active: true,
+    createdAt: now,
+    updatedAt: now,
   },
   {
     id: 4,
@@ -49,6 +67,11 @@ export const products = [
     rating: 4.6,
     image: perfumeBottle,
     category: 'Fragrance',
+    stock: 10,
+    featured: true,
+    active: true,
+    createdAt: now,
+    updatedAt: now,
   },
   {
     id: 5,
@@ -58,6 +81,11 @@ export const products = [
     rating: 4.9,
     image: featuredProducts,
     category: 'Sets',
+    stock: 5,
+    featured: true,
+    active: true,
+    createdAt: now,
+    updatedAt: now,
   },
   {
     id: 6,
@@ -67,6 +95,11 @@ export const products = [
     rating: 4.5,
     image: pumpBottles,
     category: 'Body Care',
+    stock: 25,
+    featured: false,
+    active: true,
+    createdAt: now,
+    updatedAt: now,
   },
   {
     id: 7,
@@ -76,6 +109,11 @@ export const products = [
     rating: 4.8,
     image: candleStone,
     category: 'Home',
+    stock: 12,
+    featured: false,
+    active: true,
+    createdAt: now,
+    updatedAt: now,
   },
   {
     id: 8,
@@ -86,6 +124,11 @@ export const products = [
     image: serumNew,
     category: 'Face Care',
     discount: 40,
+    stock: 18,
+    featured: true,
+    active: true,
+    createdAt: now,
+    updatedAt: now,
   },
   {
     id: 9,
@@ -95,6 +138,11 @@ export const products = [
     rating: 4.8,
     image: skincareSet,
     category: 'Sets',
+    stock: 8,
+    featured: true,
+    active: true,
+    createdAt: now,
+    updatedAt: now,
   },
   {
     id: 10,
@@ -105,6 +153,11 @@ export const products = [
     image: diffuser,
     category: 'Home',
     discount: 40,
+    stock: 15,
+    featured: false,
+    active: true,
+    createdAt: now,
+    updatedAt: now,
   },
   {
     id: 11,
@@ -114,6 +167,11 @@ export const products = [
     rating: 4.7,
     image: fentyProducts,
     category: 'Sets',
+    stock: 10,
+    featured: false,
+    active: true,
+    createdAt: now,
+    updatedAt: now,
   },
   {
     id: 12,
@@ -123,6 +181,11 @@ export const products = [
     rating: 4.6,
     image: creamJar,
     category: 'Face Care',
+    stock: 40,
+    featured: false,
+    active: true,
+    createdAt: now,
+    updatedAt: now,
   },
   {
     id: 13,
@@ -132,6 +195,11 @@ export const products = [
     rating: 4.7,
     image: whiteBottle,
     category: 'Fragrance',
+    stock: 22,
+    featured: false,
+    active: true,
+    createdAt: now,
+    updatedAt: now,
   },
   {
     id: 14,
@@ -141,6 +209,11 @@ export const products = [
     rating: 4.8,
     image: lotionSet,
     category: 'Body Care',
+    stock: 15,
+    featured: false,
+    active: true,
+    createdAt: now,
+    updatedAt: now,
   },
 ];
 
