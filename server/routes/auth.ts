@@ -1,35 +1,45 @@
-import { Router } from "express";
+import { Hono } from "hono";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { prisma } from "../prisma";
 import { Role } from "@prisma/client";
 import { loginSchema, registerSchema } from "../schemas";
+import { PrismaClient } from "@prisma/client";
 
-const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || "";
+type Bindings = {
+    DB: D1Database;
+    JWT_SECRET: string;
+};
 
-router.post("/login", async (req, res) => {
+type Variables = {
+    prisma: PrismaClient;
+};
+
+const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+
+app.post("/login", async (c) => {
     try {
-        const validatedData = loginSchema.parse(req.body);
+        const body = await c.req.json();
+        const validatedData = loginSchema.parse(body);
         const { email, password } = validatedData;
+        const prisma = c.get('prisma');
 
         const user = await prisma.user.findUnique({ where: { email } });
 
         if (!user) {
-            return res.status(401).json({ error: "Invalid credentials" });
+            return c.json({ error: "Invalid credentials" }, 401);
         }
 
         const isValidPassword = await bcrypt.compare(password, user.passwordHash);
 
         if (!isValidPassword) {
-            return res.status(401).json({ error: "Invalid credentials" });
+            return c.json({ error: "Invalid credentials" }, 401);
         }
 
-        const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
+        const token = jwt.sign({ userId: user.id }, c.env.JWT_SECRET, {
             expiresIn: "7d",
         });
 
-        res.json({
+        return c.json({
             token,
             user: {
                 id: user.id,
@@ -42,19 +52,21 @@ router.post("/login", async (req, res) => {
         });
     } catch (error) {
         console.error("Login error:", error);
-        res.status(500).json({ error: "Internal server error" });
+        return c.json({ error: "Internal server error" }, 500);
     }
 });
 
-router.post("/register", async (req, res) => {
+app.post("/register", async (c) => {
     try {
-        const validatedData = registerSchema.parse(req.body);
+        const body = await c.req.json();
+        const validatedData = registerSchema.parse(body);
         const { name, email, password, phone } = validatedData;
+        const prisma = c.get('prisma');
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
 
         if (existingUser) {
-            return res.status(400).json({ error: "User already exists" });
+            return c.json({ error: "User already exists" }, 400);
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -69,11 +81,11 @@ router.post("/register", async (req, res) => {
             },
         });
 
-        const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
+        const token = jwt.sign({ userId: user.id }, c.env.JWT_SECRET, {
             expiresIn: "7d",
         });
 
-        res.json({
+        return c.json({
             token,
             user: {
                 id: user.id,
@@ -86,8 +98,8 @@ router.post("/register", async (req, res) => {
         });
     } catch (error) {
         console.error("Registration error:", error);
-        res.status(500).json({ error: "Internal server error" });
+        return c.json({ error: "Internal server error" }, 500);
     }
 });
 
-export default router;
+export default app;

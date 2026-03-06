@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Star, Heart } from "lucide-react";
-import { Product, useCartStore } from "@/lib/store";
+import { Product, useCartStore, useAuthStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -43,10 +43,19 @@ const ProductCardSkeleton = ({
 
 const ProductCard = ({ product, variant = "default" }: ProductCardProps) => {
   const addToCart = useCartStore((state) => state.addToCart);
+  const setDrawerOpen = useCartStore((state) => state.setDrawerOpen);
 
   const handleAddToCart = () => {
+    const { isAuthenticated, setShowAuthModal } = useAuthStore.getState();
+
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+
     addToCart(product);
     toast.success(`${product.name} added to cart`);
+    setDrawerOpen(true);
   };
 
   if (variant === "compact") {

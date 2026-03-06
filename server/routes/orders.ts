@@ -1,18 +1,30 @@
-import { Router } from "express";
-import { prisma } from "../prisma";
+import { Hono } from "hono";
 import { OrderStatus } from "@prisma/client";
 import { authenticateToken } from "../middleware/auth";
 import { createOrderSchema } from "../schemas";
+import { PrismaClient } from "@prisma/client";
 
-const router = Router();
+type Bindings = {
+    DB: D1Database;
+};
 
-// Apply authentication middleware to all routes
-router.use(authenticateToken);
+type Variables = {
+    prisma: PrismaClient;
+    user: any;
+};
 
-router.post("/", async (req: any, res) => {
+const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+
+// Apply authentication middleware
+app.use("*", authenticateToken);
+
+app.post("/", async (c) => {
     try {
-        const validatedData = createOrderSchema.parse(req.body);
+        const body = await c.req.json();
+        const validatedData = createOrderSchema.parse(body);
         const { items, customerInfo, shippingAddress, notes } = validatedData;
+        const prisma = c.get('prisma');
+        const user = c.get('user');
 
         // Calculate totals
         let subtotal = 0;
@@ -24,15 +36,11 @@ router.post("/", async (req: any, res) => {
             });
 
             if (!product || !product.active) {
-                return res
-                    .status(400)
-                    .json({ error: `Product ${item.productId} not found or inactive` });
+                return c.json({ error: `Product ${item.productId} not found or inactive` }, 400);
             }
 
             if (product.stock < item.quantity) {
-                return res
-                    .status(400)
-                    .json({ error: `Insufficient stock for ${product.name}` });
+                return c.json({ error: `Insufficient stock for ${product.name}` }, 400);
             }
 
             const itemTotal = Number(product.price) * item.quantity;
@@ -65,15 +73,15 @@ router.post("/", async (req: any, res) => {
 
         const order = await prisma.order.create({
             data: {
-                userId: req.user.id,
+                userId: user.id,
                 status: OrderStatus.PENDING,
                 total,
                 subtotal,
                 tax,
                 shipping: shippingCost,
-                customerName: customerInfo.name || req.user.name,
-                customerEmail: customerInfo.email || req.user.email,
-                customerPhone: customerInfo.phone || req.user.phone,
+                customerName: customerInfo.name || user.name,
+                customerEmail: customerInfo.email || user.email,
+                customerPhone: customerInfo.phone || user.phone,
                 shippingAddress: shippingAddress,
                 notes,
                 orderItems: {
@@ -95,17 +103,19 @@ router.post("/", async (req: any, res) => {
             });
         }
 
-        res.json(order);
+        return c.json(order);
     } catch (error) {
         console.error("Error creating order:", error);
-        res.status(500).json({ error: "Failed to create order" });
+        return c.json({ error: "Failed to create order" }, 500);
     }
 });
 
-router.get("/my", async (req: any, res) => {
+app.get("/my", async (c) => {
     try {
+        const prisma = c.get('prisma');
+        const user = c.get('user');
         const orders = await prisma.order.findMany({
-            where: { userId: req.user.id },
+            where: { userId: user.id },
             include: {
                 orderItems: {
                     include: { product: true },
@@ -114,11 +124,12 @@ router.get("/my", async (req: any, res) => {
             orderBy: { createdAt: "desc" },
         });
 
-        res.json(orders);
+        return c.json(orders);
     } catch (error) {
         console.error("Error fetching orders:", error);
-        res.status(500).json({ error: "Failed to fetch orders" });
+        return c.json({ error: "Failed to fetch orders" }, 500);
     }
 });
 
-export default router;
+export default app;
+

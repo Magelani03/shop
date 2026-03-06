@@ -1,11 +1,15 @@
 {
     "compilerOptions": {
         "target": "ESNext",
-        "module": "CommonJS",
-        "moduleResolution": "node",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "types": [
+            "@cloudflare/workers-types"
+        ],
         "esModuleInterop": true,
         "skipLibCheck": true,
         "strict": false,
+        "resolveJsonModule": true,
         "outDir": "../dist-server"
     },
     "include": [

@@ -1,0 +1,22 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "shop-api",
+	"main": "server/index.ts",
+	"compatibility_date": "2026-03-01",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"vars": {
+		"JWT_SECRET": "your-secret-here"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "shop-db-v2",
+			"database_id": "6ac8e1a9-98ac-4531-9774-70ca98ed6166"
+		}
+	],
+	"observability": {
+		"enabled": true
+	}
+}

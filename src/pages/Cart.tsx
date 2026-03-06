@@ -2,7 +2,7 @@ import { Minus, Plus, Trash2 } from 'lucide-react';
 import SidebarLayout from '@/components/layout/SidebarLayout';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCartStore } from '@/lib/store';
+import { useCartStore, useAuthStore } from '@/lib/store';
 import { toast } from 'sonner';
 
 const SHIPPING_FEE = 150;
@@ -13,6 +13,13 @@ const Cart = () => {
   const total = subtotal + SHIPPING_FEE;
 
   const handleCheckout = () => {
+    const { isAuthenticated, setShowAuthModal } = useAuthStore.getState();
+
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+
     toast.success('Order placed successfully!');
     clearCart();
   };

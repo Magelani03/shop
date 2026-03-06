@@ -1,20 +1,30 @@
-import { Router } from "express";
-import { prisma } from "../prisma";
+import { Hono } from "hono";
+import { PrismaClient } from "@prisma/client";
 
-const router = Router();
+type Bindings = {
+    DB: D1Database;
+};
 
-router.get("/", async (req, res) => {
+type Variables = {
+    prisma: PrismaClient;
+};
+
+const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+
+app.get("/", async (c) => {
     try {
+        const prisma = c.get('prisma');
         const settings = await prisma.settings.findMany();
         const settingsMap = settings.reduce((acc: any, setting) => {
             acc[setting.key] = setting.value;
             return acc;
         }, {});
-        res.json(settingsMap);
+        return c.json(settingsMap);
     } catch (error) {
         console.error("Error fetching settings:", error);
-        res.status(500).json({ error: "Failed to fetch settings" });
+        return c.json({ error: "Failed to fetch settings" }, 500);
     }
 });
 
-export default router;
+export default app;
+

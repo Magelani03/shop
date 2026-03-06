@@ -19,6 +19,8 @@ import AdminOrders from "./pages/Admin/Orders";
 import AdminProducts from "./pages/Admin/Products";
 import AdminUsers from "./pages/Admin/Users";
 import Analytics from "./pages/Admin/Analytics";
+import AuthModal from "./components/AuthModal";
+import CartDrawer from "./components/CartDrawer";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +30,8 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <AuthModal />
+        <CartDrawer />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/products" element={<Products />} />

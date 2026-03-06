@@ -1,17 +1,26 @@
-import { Router } from "express";
-import { prisma } from "../prisma";
+import { Hono } from "hono";
+import { PrismaClient } from "@prisma/client";
 
-const router = Router();
+type Bindings = {
+    DB: D1Database;
+};
+
+type Variables = {
+    prisma: PrismaClient;
+};
+
+const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
 // Public product endpoints
-router.get("/", async (req, res) => {
+app.get("/", async (c) => {
     try {
-        const { category, featured, search, limit, offset } = req.query;
+        const prisma = c.get('prisma'); // We'll set this in middleware
+        const { category, featured, search, limit, offset } = c.req.query();
 
         const where: any = { active: true };
 
         if (category) {
-            where.category = category as string;
+            where.category = category;
         }
 
         if (featured === "true") {
@@ -20,39 +29,40 @@ router.get("/", async (req, res) => {
 
         if (search) {
             where.OR = [
-                { name: { contains: search as string, mode: "insensitive" } },
-                { description: { contains: search as string, mode: "insensitive" } },
+                { name: { contains: search, mode: "insensitive" } },
+                { description: { contains: search, mode: "insensitive" } },
             ];
         }
 
         const products = await prisma.product.findMany({
             where,
-            take: limit ? parseInt(limit as string) : undefined,
-            skip: offset ? parseInt(offset as string) : undefined,
+            take: limit ? parseInt(limit) : undefined,
+            skip: offset ? parseInt(offset) : undefined,
             orderBy: { createdAt: "desc" },
         });
 
-        res.json(products);
+        return c.json(products);
     } catch (error) {
         console.error("Error fetching products:", error);
-        res.status(500).json({ error: "Failed to fetch products" });
+        return c.json({ error: "Failed to fetch products" }, 500);
     }
 });
 
-router.get("/:id", async (req, res) => {
+app.get("/:id", async (c) => {
     try {
-        const id = parseInt(req.params.id);
+        const prisma = c.get('prisma') as PrismaClient;
+        const id = parseInt(c.req.param("id"));
         const product = await prisma.product.findUnique({ where: { id } });
 
         if (!product || !product.active) {
-            return res.status(404).json({ error: "Product not found" });
+            return c.json({ error: "Product not found" }, 404);
         }
 
-        res.json(product);
+        return c.json(product);
     } catch (error) {
         console.error("Error fetching product:", error);
-        res.status(500).json({ error: "Failed to fetch product" });
+        return c.json({ error: "Failed to fetch product" }, 500);
     }
 });
 
-export default router;
+export default app;

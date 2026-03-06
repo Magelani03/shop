@@ -1,17 +1,27 @@
-import { Router } from "express";
-import { prisma } from "../prisma";
-import { Role, OrderStatus } from "@prisma/client";
+import { Hono } from "hono";
+import { Role, OrderStatus, PrismaClient } from "@prisma/client";
 import { authenticateToken, requireAdmin } from "../middleware/auth";
 import { productSchema } from "../schemas";
 
-const router = Router();
+type Bindings = {
+    DB: D1Database;
+};
 
-// Apply admin protection to all routes
-router.use(authenticateToken, requireAdmin);
+type Variables = {
+    prisma: PrismaClient;
+    user: any;
+};
+
+const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+
+// Apply admin protection
+app.use("*", authenticateToken);
+app.use("*", requireAdmin);
 
 // Admin Dashboard Stats
-router.get("/stats", async (req, res) => {
+app.get("/stats", async (c) => {
     try {
+        const prisma = c.get('prisma');
         const [
             totalProducts,
             totalOrders,
@@ -38,7 +48,7 @@ router.get("/stats", async (req, res) => {
             }),
         ]);
 
-        res.json({
+        return c.json({
             totalProducts,
             totalOrders,
             totalUsers,
@@ -48,25 +58,26 @@ router.get("/stats", async (req, res) => {
         });
     } catch (error) {
         console.error("Error fetching admin stats:", error);
-        res.status(500).json({ error: "Failed to fetch stats" });
+        return c.json({ error: "Failed to fetch stats" }, 500);
     }
 });
 
 // Admin Product Management
-router.get("/products", async (req, res) => {
+app.get("/products", async (c) => {
     try {
-        const { search, category, status } = req.query;
+        const prisma = c.get('prisma');
+        const { search, category, status } = c.req.query();
         const where: any = {};
 
         if (search) {
             where.OR = [
-                { name: { contains: search as string, mode: "insensitive" } },
-                { description: { contains: search as string, mode: "insensitive" } },
+                { name: { contains: search, mode: "insensitive" } },
+                { description: { contains: search, mode: "insensitive" } },
             ];
         }
 
         if (category) {
-            where.category = category as string;
+            where.category = category;
         }
 
         if (status === "active") {
@@ -80,16 +91,18 @@ router.get("/products", async (req, res) => {
             orderBy: { createdAt: "desc" },
         });
 
-        res.json(products);
+        return c.json(products);
     } catch (error) {
         console.error("Error fetching admin products:", error);
-        res.status(500).json({ error: "Failed to fetch products" });
+        return c.json({ error: "Failed to fetch products" }, 500);
     }
 });
 
-router.post("/products", async (req, res) => {
+app.post("/products", async (c) => {
     try {
-        const validatedData = productSchema.parse(req.body);
+        const prisma = c.get('prisma');
+        const body = await c.req.json();
+        const validatedData = productSchema.parse(body);
         const {
             name,
             description,
@@ -105,26 +118,28 @@ router.post("/products", async (req, res) => {
             data: {
                 name,
                 description,
-                price: parseFloat(price),
+                price: parseFloat(String(price)),
                 category,
                 image,
-                stock: parseInt(stock),
+                stock: parseInt(String(stock)),
                 featured,
-                discount: discount ? parseInt(discount) : null,
+                discount: discount ? parseInt(String(discount)) : null,
                 active: true,
             },
         });
 
-        res.json(product);
+
+        return c.json(product);
     } catch (error) {
         console.error("Error creating product:", error);
-        res.status(500).json({ error: "Failed to create product" });
+        return c.json({ error: "Failed to create product" }, 500);
     }
 });
 
-router.put("/products/:id", async (req, res) => {
+app.put("/products/:id", async (c) => {
     try {
-        const id = parseInt(req.params.id);
+        const prisma = c.get('prisma');
+        const id = parseInt(c.req.param("id"));
         const {
             name,
             description,
@@ -135,45 +150,48 @@ router.put("/products/:id", async (req, res) => {
             featured,
             discount,
             active,
-        } = req.body;
+        } = await c.req.json();
 
         const product = await prisma.product.update({
             where: { id },
             data: {
                 name,
                 description,
-                price: price ? parseFloat(price) : undefined,
+                price: price ? parseFloat(String(price)) : undefined,
                 category,
                 image,
-                stock: stock !== undefined ? parseInt(stock) : undefined,
+                stock: stock !== undefined ? parseInt(String(stock)) : undefined,
                 featured,
-                discount: discount ? parseInt(discount) : null,
+                discount: discount ? parseInt(String(discount)) : null,
                 active,
             },
         });
 
-        res.json(product);
+
+        return c.json(product);
     } catch (error) {
         console.error("Error updating product:", error);
-        res.status(500).json({ error: "Failed to update product" });
+        return c.json({ error: "Failed to update product" }, 500);
     }
 });
 
-router.delete("/products/:id", async (req, res) => {
+app.delete("/products/:id", async (c) => {
     try {
-        const id = parseInt(req.params.id);
+        const prisma = c.get('prisma');
+        const id = parseInt(c.req.param("id"));
         await prisma.product.delete({ where: { id } });
-        res.json({ message: "Product deleted successfully" });
+        return c.json({ message: "Product deleted successfully" });
     } catch (error) {
         console.error("Error deleting product:", error);
-        res.status(500).json({ error: "Failed to delete product" });
+        return c.json({ error: "Failed to delete product" }, 500);
     }
 });
 
 // Admin Order Management
-router.get("/orders", async (req, res) => {
+app.get("/orders", async (c) => {
     try {
-        const { status, search, page = 1, limit = 20 } = req.query;
+        const prisma = c.get('prisma');
+        const { status, search, page = "1", limit = "20" } = c.req.query();
         const where: any = {};
 
         if (status && status !== "all") {
@@ -182,19 +200,19 @@ router.get("/orders", async (req, res) => {
 
         if (search) {
             where.OR = [
-                { customerName: { contains: search as string, mode: "insensitive" } },
-                { customerEmail: { contains: search as string, mode: "insensitive" } },
-                { customerPhone: { contains: search as string, mode: "insensitive" } },
+                { customerName: { contains: search, mode: "insensitive" } },
+                { customerEmail: { contains: search, mode: "insensitive" } },
+                { customerPhone: { contains: search, mode: "insensitive" } },
             ];
         }
 
-        const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
+        const skip = (parseInt(page) - 1) * parseInt(limit);
 
         const [orders, totalCount] = await Promise.all([
             prisma.order.findMany({
                 where,
                 skip,
-                take: parseInt(limit as string),
+                take: parseInt(limit),
                 include: {
                     user: { select: { name: true, email: true } },
                     orderItems: {
@@ -206,22 +224,23 @@ router.get("/orders", async (req, res) => {
             prisma.order.count({ where }),
         ]);
 
-        res.json({
+        return c.json({
             orders,
             totalCount,
-            totalPages: Math.ceil(totalCount / parseInt(limit as string)),
-            currentPage: parseInt(page as string),
+            totalPages: Math.ceil(totalCount / parseInt(limit)),
+            currentPage: parseInt(page),
         });
     } catch (error) {
         console.error("Error fetching admin orders:", error);
-        res.status(500).json({ error: "Failed to fetch orders" });
+        return c.json({ error: "Failed to fetch orders" }, 500);
     }
 });
 
-router.put("/orders/:id/status", async (req, res) => {
+app.put("/orders/:id/status", async (c) => {
     try {
-        const id = parseInt(req.params.id);
-        const { status } = req.body;
+        const prisma = c.get('prisma');
+        const id = parseInt(c.req.param("id"));
+        const { status } = await c.req.json();
 
         const order = await prisma.order.update({
             where: { id },
@@ -232,23 +251,24 @@ router.put("/orders/:id/status", async (req, res) => {
             },
         });
 
-        res.json(order);
+        return c.json(order);
     } catch (error) {
         console.error("Error updating order status:", error);
-        res.status(500).json({ error: "Failed to update order status" });
+        return c.json({ error: "Failed to update order status" }, 500);
     }
 });
 
-router.post("/orders/:id/whatsapp", async (req, res) => {
+app.post("/orders/:id/whatsapp", async (c) => {
     try {
-        const id = parseInt(req.params.id);
+        const prisma = c.get('prisma');
+        const id = parseInt(c.req.param("id"));
         const order = await prisma.order.findUnique({
             where: { id },
             include: { orderItems: { include: { product: true } } },
         });
 
         if (!order) {
-            return res.status(404).json({ error: "Order not found" });
+            return c.json({ error: "Order not found" }, 404);
         }
 
         const settings = await prisma.settings.findMany();
@@ -260,7 +280,7 @@ router.post("/orders/:id/whatsapp", async (req, res) => {
         const whatsappNumber = settingsMap.admin_whatsapp;
 
         if (!whatsappNumber) {
-            return res.status(400).json({ error: "WhatsApp number not configured" });
+            return c.json({ error: "WhatsApp number not configured" }, 400);
         }
 
         // Create WhatsApp message
@@ -280,23 +300,24 @@ router.post("/orders/:id/whatsapp", async (req, res) => {
             data: { whatsappSent: true },
         });
 
-        res.json({ whatsappUrl, message });
+        return c.json({ whatsappUrl, message });
     } catch (error) {
         console.error("Error generating WhatsApp message:", error);
-        res.status(500).json({ error: "Failed to generate WhatsApp message" });
+        return c.json({ error: "Failed to generate WhatsApp message" }, 500);
     }
 });
 
 // Admin User Management
-router.get("/users", async (req, res) => {
+app.get("/users", async (c) => {
     try {
-        const { search, role } = req.query;
+        const prisma = c.get('prisma');
+        const { search, role } = c.req.query();
         const where: any = {};
 
         if (search) {
             where.OR = [
-                { name: { contains: search as string, mode: "insensitive" } },
-                { email: { contains: search as string, mode: "insensitive" } },
+                { name: { contains: search, mode: "insensitive" } },
+                { email: { contains: search, mode: "insensitive" } },
             ];
         }
 
@@ -318,27 +339,29 @@ router.get("/users", async (req, res) => {
             orderBy: { createdAt: "desc" },
         });
 
-        res.json(users);
+        return c.json(users);
     } catch (error) {
         console.error("Error fetching users:", error);
-        res.status(500).json({ error: "Failed to fetch users" });
+        return c.json({ error: "Failed to fetch users" }, 500);
     }
 });
 
 // Admin Settings Management
-router.get("/settings", async (req, res) => {
+app.get("/settings", async (c) => {
     try {
+        const prisma = c.get('prisma');
         const settings = await prisma.settings.findMany();
-        res.json(settings);
+        return c.json(settings);
     } catch (error) {
         console.error("Error fetching admin settings:", error);
-        res.status(500).json({ error: "Failed to fetch settings" });
+        return c.json({ error: "Failed to fetch settings" }, 500);
     }
 });
 
-router.put("/settings", async (req, res) => {
+app.put("/settings", async (c) => {
     try {
-        const updates = req.body;
+        const prisma = c.get('prisma');
+        const updates = await c.req.json();
         for (const [key, value] of Object.entries(updates)) {
             await prisma.settings.upsert({
                 where: { key },
@@ -347,17 +370,19 @@ router.put("/settings", async (req, res) => {
             });
         }
         const updatedSettings = await prisma.settings.findMany();
-        res.json(updatedSettings);
+        return c.json(updatedSettings);
     } catch (error) {
         console.error("Error updating settings:", error);
-        res.status(500).json({ error: "Failed to update settings" });
+        return c.json({ error: "Failed to update settings" }, 500);
     }
 });
 
+
 // Sales Analytics
-router.get("/analytics/sales", async (req, res) => {
+app.get("/analytics/sales", async (c) => {
     try {
-        const { period = "7d" } = req.query;
+        const prisma = c.get('prisma');
+        const { period = "7d" } = c.req.query();
         const startDate = new Date();
 
         switch (period) {
@@ -413,11 +438,12 @@ router.get("/analytics/sales", async (req, res) => {
             }),
         );
 
-        res.json({ salesData, topProducts: topProductsWithDetails, ordersByStatus });
+        return c.json({ salesData, topProducts: topProductsWithDetails, ordersByStatus });
     } catch (error) {
         console.error("Error fetching sales analytics:", error);
-        res.status(500).json({ error: "Failed to fetch sales analytics" });
+        return c.json({ error: "Failed to fetch sales analytics" }, 500);
     }
 });
 
-export default router;
+export default app;
+

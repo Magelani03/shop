@@ -34,12 +34,12 @@ export interface Order {
   id: number;
   userId: number;
   status:
-    | "PENDING"
-    | "CONFIRMED"
-    | "PROCESSING"
-    | "SHIPPED"
-    | "DELIVERED"
-    | "CANCELLED";
+  | "PENDING"
+  | "CONFIRMED"
+  | "PROCESSING"
+  | "SHIPPED"
+  | "DELIVERED"
+  | "CANCELLED";
   total: number;
   subtotal: number;
   tax: number;
@@ -73,6 +73,8 @@ interface CartStore {
   clearCart: () => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
+  isDrawerOpen: boolean;
+  setDrawerOpen: (open: boolean) => void;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -110,8 +112,8 @@ export const useCartStore = create<CartStore>()(
             quantity <= 0
               ? state.items.filter((item) => item.id !== productId)
               : state.items.map((item) =>
-                  item.id === productId ? { ...item, quantity } : item,
-                ),
+                item.id === productId ? { ...item, quantity } : item,
+              ),
         }));
       },
 
@@ -127,6 +129,9 @@ export const useCartStore = create<CartStore>()(
           0,
         );
       },
+
+      isDrawerOpen: false,
+      setDrawerOpen: (open: boolean) => set({ isDrawerOpen: open }),
     }),
     {
       name: "cart-storage",
@@ -148,6 +153,8 @@ interface AuthStore {
   logout: () => void;
   setAuth: (token: string, user: User) => void;
   isAdmin: () => boolean;
+  showAuthModal: boolean;
+  setShowAuthModal: (show: boolean) => void;
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -156,6 +163,7 @@ export const useAuthStore = create<AuthStore>()(
       token: null,
       user: null,
       isAuthenticated: false,
+      showAuthModal: false,
 
       login: async (email: string, password: string) => {
         try {
@@ -232,6 +240,8 @@ export const useAuthStore = create<AuthStore>()(
         const { user } = get();
         return user?.role === "ADMIN";
       },
+
+      setShowAuthModal: (show: boolean) => set({ showAuthModal: show }),
     }),
     {
       name: "auth-storage",
@@ -488,7 +498,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
         // Update local state
         set((state) => ({
           orders: state.orders.map((order) =>
-            order.id === orderId ? { ...order, status } : order,
+            order.id === orderId ? { ...order, status: status as any } : order
           ),
         }));
         return true;

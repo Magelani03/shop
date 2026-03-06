@@ -5,13 +5,14 @@ import SidebarLayout from '@/components/layout/SidebarLayout';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
 import { getProduct, getProducts } from '@/lib/api';
-import { useCartStore } from '@/lib/store';
+import { useCartStore, useAuthStore } from '@/lib/store';
 import { toast } from 'sonner';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const productId = Number(id);
   const addToCart = useCartStore((state) => state.addToCart);
+  const setDrawerOpen = useCartStore((state) => state.setDrawerOpen);
 
   const {
     data: product,
@@ -25,7 +26,7 @@ const ProductDetail = () => {
 
   const { data: allProducts } = useQuery({
     queryKey: ['products'],
-    queryFn: getProducts,
+    queryFn: () => getProducts(),
   });
 
   const suggestedProducts = (allProducts ?? [])
@@ -63,8 +64,16 @@ const ProductDetail = () => {
   }
 
   const handleBuyNow = () => {
+    const { isAuthenticated, setShowAuthModal } = useAuthStore.getState();
+
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+
     addToCart(product);
     toast.success(`${product.name} added to cart`);
+    setDrawerOpen(true);
   };
 
   return (
@@ -84,16 +93,16 @@ const ProductDetail = () => {
                       {product.name}
                     </h1>
                   </div>
-                  
+
                   <p className="text-primary-foreground/90 leading-relaxed">
                     {product.description}
                   </p>
-                  
+
                   <div className="flex items-center gap-2">
                     <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
                     <span className="font-semibold">{product.rating}</span>
                   </div>
-                  
+
                   <div className="space-y-1">
                     <p className="font-display text-3xl font-bold">
                       N$ {product.price.toFixed(2)}
@@ -104,7 +113,7 @@ const ProductDetail = () => {
                       </p>
                     )}
                   </div>
-                  
+
                   <Button
                     onClick={handleBuyNow}
                     size="lg"
@@ -113,7 +122,7 @@ const ProductDetail = () => {
                     BUY NOW
                   </Button>
                 </div>
-                
+
                 <div className="relative">
                   <img
                     src={product.image}
