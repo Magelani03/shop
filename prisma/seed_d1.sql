@@ -9,17 +9,18 @@ VALUES (2, 'Sarah Johnson', 'customer@example.com', '+0987654321', '$2a$10$6R6xG
 ON CONFLICT (email) DO NOTHING;
 
 -- Seed Settings
-INSERT INTO "Settings" ("key", "value", "description", "createdAt", "updatedAt") VALUES
-('store_name', 'Beauty Life Store', 'The name of the store', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('store_description', 'Your premier destination for natural, organic beauty products', 'Store description for SEO and marketing', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('admin_whatsapp', '+1234567890', 'WhatsApp number for order notifications and customer support', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('store_email', 'info@beautystore.com', 'Main store contact email', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('store_address', '123 Beauty Street, Beauty City, BC 12345', 'Physical store address', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('shipping_cost', '5.99', 'Standard shipping cost', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('free_shipping_threshold', '50.00', 'Minimum order amount for free shipping', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('tax_rate', '0.08', 'Tax rate (8%)', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('currency', 'USD', 'Store currency', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('currency_symbol', '$', 'Currency symbol for display', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+INSERT INTO "Settings" ("key", "value", "description", "updatedAt") VALUES
+('store_name', 'Beauty Life Store', 'The name of the store', CURRENT_TIMESTAMP),
+('store_description', 'Your premier destination for natural, organic beauty products', 'Store description for SEO and marketing', CURRENT_TIMESTAMP),
+-- IMPORTANT: Replace +1234567890 below with the real admin WhatsApp number (with country code, no spaces)
+('admin_whatsapp', '+1234567890', 'WhatsApp number for order notifications and customer support', CURRENT_TIMESTAMP),
+('store_email', 'info@beautystore.com', 'Main store contact email', CURRENT_TIMESTAMP),
+('store_address', '123 Beauty Street, Beauty City, BC 12345', 'Physical store address', CURRENT_TIMESTAMP),
+('shipping_cost', '5.99', 'Standard shipping cost', CURRENT_TIMESTAMP),
+('free_shipping_threshold', '50.00', 'Minimum order amount for free shipping', CURRENT_TIMESTAMP),
+('tax_rate', '0.08', 'Tax rate (8%)', CURRENT_TIMESTAMP),
+('currency', 'USD', 'Store currency', CURRENT_TIMESTAMP),
+('currency_symbol', '$', 'Currency symbol for display', CURRENT_TIMESTAMP)
 ON CONFLICT ("key") DO UPDATE SET "value" = EXCLUDED."value";
 
 -- Seed Products

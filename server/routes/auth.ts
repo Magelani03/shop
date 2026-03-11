@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { Role } from "@prisma/client";
+import { Role, PrismaClient } from "@prisma/client";
 import { loginSchema, registerSchema } from "../schemas";
-import { PrismaClient } from "@prisma/client";
+import { authenticateToken } from "../middleware/auth";
 
 type Bindings = {
     DB: D1Database;
@@ -12,6 +12,7 @@ type Bindings = {
 
 type Variables = {
     prisma: PrismaClient;
+    user: any;
 };
 
 const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
@@ -48,10 +49,16 @@ app.post("/login", async (c) => {
                 role: user.role,
                 phone: user.phone,
                 avatar: user.avatar,
+                address: user.address,
+                city: user.city,
             },
         });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error("Login error:", error);
+        const msg = error instanceof Error ? error.message : String(error);
+        if (msg.includes("does not exist") || msg.includes("no such table")) {
+            return c.json({ error: "Database not set up. Run: npm run db:setup:local" }, 503);
+        }
         return c.json({ error: "Internal server error" }, 500);
     }
 });
@@ -81,6 +88,10 @@ app.post("/register", async (c) => {
             },
         });
 
+        console.log("SUCCESS: User created in DB:", user.email, "ID:", user.id);
+        const count = await prisma.user.count();
+        console.log("Total users in this DB session:", count);
+
         const token = jwt.sign({ userId: user.id }, c.env.JWT_SECRET, {
             expiresIn: "7d",
         });
@@ -94,11 +105,72 @@ app.post("/register", async (c) => {
                 role: user.role,
                 phone: user.phone,
                 avatar: user.avatar,
+                address: user.address,
+                city: user.city,
+            },
+        });
+    } catch (error: unknown) {
+        console.error("Registration error:", error);
+        const msg = error instanceof Error ? error.message : String(error);
+        if (msg.includes("does not exist") || msg.includes("no such table")) {
+            return c.json({ error: "Database not set up. Run: npm run db:setup:local" }, 503);
+        }
+        return c.json({ error: "Internal server error" }, 500);
+    }
+});
+
+// Authenticated user profile routes
+app.use("/me/*", authenticateToken);
+
+app.get("/me", async (c) => {
+    const user = c.get("user");
+
+    return c.json({
+        user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            phone: user.phone,
+            avatar: user.avatar,
+            address: user.address,
+            city: user.city,
+        },
+    });
+});
+
+app.put("/me", async (c) => {
+    try {
+        const prisma = c.get("prisma");
+        const currentUser = c.get("user");
+        const { name, phone, avatar, address, city } = await c.req.json();
+
+        const updated = await prisma.user.update({
+            where: { id: currentUser.id },
+            data: {
+                name: name ?? currentUser.name,
+                phone: phone ?? currentUser.phone,
+                avatar: avatar ?? currentUser.avatar,
+                address: address ?? currentUser.address,
+                city: city ?? currentUser.city,
+            },
+        });
+
+        return c.json({
+            user: {
+                id: updated.id,
+                name: updated.name,
+                email: updated.email,
+                role: updated.role,
+                phone: updated.phone,
+                avatar: updated.avatar,
+                address: updated.address,
+                city: updated.city,
             },
         });
     } catch (error) {
-        console.error("Registration error:", error);
-        return c.json({ error: "Internal server error" }, 500);
+        console.error("Profile update error:", error);
+        return c.json({ error: "Failed to update profile" }, 500);
     }
 });
 

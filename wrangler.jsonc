@@ -7,7 +7,8 @@
 		"nodejs_compat"
 	],
 	"vars": {
-		"JWT_SECRET": "your-secret-here"
+		"JWT_SECRET": "your-secret-here",
+		"ADMIN_WHATSAPP": "+1234567890"
 	},
 	"d1_databases": [
 		{

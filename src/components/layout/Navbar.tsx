@@ -1,12 +1,14 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Search, ShoppingBag, User } from 'lucide-react';
+import { Search, ShoppingBag, User, LayoutDashboard } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { useCartStore } from '@/lib/store';
+import { useCartStore, useAuthStore } from '@/lib/store';
 
 const Navbar = () => {
   const location = useLocation();
   const totalItems = useCartStore((state) => state.getTotalItems());
   const setDrawerOpen = useCartStore((state) => state.setDrawerOpen);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isAdmin = useAuthStore((state) => state.isAdmin);
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -14,6 +16,7 @@ const Navbar = () => {
     { name: 'About', path: '/about' },
     { name: 'Contact', path: '/contact' },
     { name: 'Sales', path: '/sales' },
+    ...(isAuthenticated && isAdmin() ? [{ name: 'Admin', path: '/admin' }] : []),
   ];
 
   return (
@@ -46,10 +49,17 @@ const Navbar = () => {
             />
           </div>
 
-          <Link to="/login" className="flex items-center gap-2 text-sm text-foreground/70 hover:text-primary transition-colors">
-            <User className="h-5 w-5" />
-            <span className="hidden sm:inline">Sign In</span>
-          </Link>
+          {isAuthenticated ? (
+            <Link to="/profile" className="flex items-center gap-2 text-sm text-foreground/70 hover:text-primary transition-colors">
+              <User className="h-5 w-5" />
+              <span className="hidden sm:inline">Profile</span>
+            </Link>
+          ) : (
+            <Link to="/login" className="flex items-center gap-2 text-sm text-foreground/70 hover:text-primary transition-colors">
+              <User className="h-5 w-5" />
+              <span className="hidden sm:inline">Sign In</span>
+            </Link>
+          )}
 
           <button onClick={() => setDrawerOpen(true)} className="relative hover:opacity-80 transition-opacity">
             <ShoppingBag className="h-5 w-5 text-foreground/70 hover:text-primary transition-colors" />

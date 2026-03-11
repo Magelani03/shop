@@ -1,5 +1,8 @@
 import type { Product, Order, User } from "@/lib/store";
 
+/** In production, set VITE_API_ORIGIN to your Worker URL (e.g. https://shop-api.xxx.workers.dev) so the frontend calls the right API. */
+const API_BASE = import.meta.env.VITE_API_ORIGIN ?? "";
+
 export interface ProductDto {
   id: number;
   name: string;
@@ -97,7 +100,7 @@ export async function getProducts(params?: {
   if (params?.limit) searchParams.append("limit", params.limit.toString());
   if (params?.offset) searchParams.append("offset", params.offset.toString());
 
-  const res = await fetch(`/api/products?${searchParams}`);
+  const res = await fetch(`${API_BASE}/api/products?${searchParams}`);
   if (!res.ok) {
     throw new Error("Failed to fetch products");
   }
@@ -106,7 +109,7 @@ export async function getProducts(params?: {
 }
 
 export async function getProduct(id: number): Promise<Product | null> {
-  const res = await fetch(`/api/products/${id}`);
+  const res = await fetch(`${API_BASE}/api/products/${id}`);
   if (res.status === 404) {
     return null;
   }
@@ -122,7 +125,7 @@ export async function login(
   email: string,
   password: string,
 ): Promise<{ token: string; user: User } | null> {
-  const res = await fetch("/api/auth/login", {
+  const res = await fetch(`${API_BASE}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -141,7 +144,7 @@ export async function register(
   password: string,
   phone?: string,
 ): Promise<{ token: string; user: User } | null> {
-  const res = await fetch("/api/auth/register", {
+  const res = await fetch(`${API_BASE}/api/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name, email, password, phone }),
@@ -152,6 +155,33 @@ export async function register(
   }
 
   return await res.json();
+}
+
+export async function updateProfile(
+  profileData: {
+    name?: string;
+    phone?: string;
+    avatar?: string;
+    address?: string;
+    city?: string;
+  },
+  authHeaders: Record<string, string>,
+): Promise<User | null> {
+  const res = await fetch(`${API_BASE}/api/auth/me`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders,
+    },
+    body: JSON.stringify(profileData),
+  });
+
+  if (!res.ok) {
+    return null;
+  }
+
+  const data = (await res.json()) as { user: User };
+  return data.user;
 }
 
 // Order API functions
@@ -168,7 +198,7 @@ export async function createOrder(
   },
   authHeaders: Record<string, string>,
 ): Promise<Order | null> {
-  const res = await fetch("/api/orders", {
+  const res = await fetch(`${API_BASE}/api/orders`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -185,10 +215,25 @@ export async function createOrder(
   return mapOrder(data);
 }
 
+export async function getOrderWhatsAppUrl(
+  id: number,
+  authHeaders: Record<string, string>,
+): Promise<{ whatsappUrl: string; message: string } | null> {
+  const res = await fetch(`${API_BASE}/api/orders/${id}/whatsapp`, {
+    headers: authHeaders,
+  });
+
+  if (!res.ok) {
+    return null;
+  }
+
+  return await res.json();
+}
+
 export async function getUserOrders(
   authHeaders: Record<string, string>,
 ): Promise<Order[]> {
-  const res = await fetch("/api/orders/my", {
+  const res = await fetch(`${API_BASE}/api/orders/my`, {
     headers: authHeaders,
   });
 
@@ -202,7 +247,7 @@ export async function getUserOrders(
 
 // Settings API functions
 export async function getSettings(): Promise<Record<string, string>> {
-  const res = await fetch("/api/settings");
+  const res = await fetch(`${API_BASE}/api/settings`);
   if (!res.ok) {
     throw new Error("Failed to fetch settings");
   }
@@ -213,7 +258,7 @@ export async function getSettings(): Promise<Record<string, string>> {
 export async function getAdminStats(
   authHeaders: Record<string, string>,
 ): Promise<any> {
-  const res = await fetch("/api/admin/stats", {
+  const res = await fetch(`${API_BASE}/api/admin/stats`, {
     headers: authHeaders,
   });
 
@@ -229,7 +274,7 @@ export async function getAdminProducts(
   authHeaders: Record<string, string>,
 ): Promise<Product[]> {
   const searchParams = new URLSearchParams(params);
-  const res = await fetch(`/api/admin/products?${searchParams}`, {
+  const res = await fetch(`${API_BASE}/api/admin/products?${searchParams}`, {
     headers: authHeaders,
   });
 
@@ -245,7 +290,7 @@ export async function createProduct(
   productData: Partial<Product>,
   authHeaders: Record<string, string>,
 ): Promise<Product | null> {
-  const res = await fetch("/api/admin/products", {
+  const res = await fetch(`${API_BASE}/api/admin/products`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -267,7 +312,7 @@ export async function updateProduct(
   productData: Partial<Product>,
   authHeaders: Record<string, string>,
 ): Promise<Product | null> {
-  const res = await fetch(`/api/admin/products/${id}`, {
+  const res = await fetch(`${API_BASE}/api/admin/products/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -288,7 +333,7 @@ export async function deleteProduct(
   id: number,
   authHeaders: Record<string, string>,
 ): Promise<boolean> {
-  const res = await fetch(`/api/admin/products/${id}`, {
+  const res = await fetch(`${API_BASE}/api/admin/products/${id}`, {
     method: "DELETE",
     headers: authHeaders,
   });
@@ -306,7 +351,7 @@ export async function getAdminOrders(
   currentPage: number;
 }> {
   const searchParams = new URLSearchParams(params);
-  const res = await fetch(`/api/admin/orders?${searchParams}`, {
+  const res = await fetch(`${API_BASE}/api/admin/orders?${searchParams}`, {
     headers: authHeaders,
   });
 
@@ -326,7 +371,7 @@ export async function updateOrderStatus(
   status: string,
   authHeaders: Record<string, string>,
 ): Promise<Order | null> {
-  const res = await fetch(`/api/admin/orders/${id}/status`, {
+  const res = await fetch(`${API_BASE}/api/admin/orders/${id}/status`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -347,7 +392,7 @@ export async function generateWhatsAppLink(
   orderId: number,
   authHeaders: Record<string, string>,
 ): Promise<string | null> {
-  const res = await fetch(`/api/admin/orders/${orderId}/whatsapp`, {
+  const res = await fetch(`${API_BASE}/api/admin/orders/${orderId}/whatsapp`, {
     method: "POST",
     headers: authHeaders,
   });
@@ -365,7 +410,7 @@ export async function getAdminUsers(
   authHeaders: Record<string, string>,
 ): Promise<any[]> {
   const searchParams = new URLSearchParams(params);
-  const res = await fetch(`/api/admin/users?${searchParams}`, {
+  const res = await fetch(`${API_BASE}/api/admin/users?${searchParams}`, {
     headers: authHeaders,
   });
 
@@ -379,7 +424,7 @@ export async function getAdminUsers(
 export async function getAdminSettings(
   authHeaders: Record<string, string>,
 ): Promise<any[]> {
-  const res = await fetch("/api/admin/settings", {
+  const res = await fetch(`${API_BASE}/api/admin/settings`, {
     headers: authHeaders,
   });
 
@@ -394,7 +439,7 @@ export async function updateAdminSettings(
   settings: Record<string, string>,
   authHeaders: Record<string, string>,
 ): Promise<any[]> {
-  const res = await fetch("/api/admin/settings", {
+  const res = await fetch(`${API_BASE}/api/admin/settings`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -414,7 +459,7 @@ export async function getSalesAnalytics(
   period: string = "7d",
   authHeaders: Record<string, string>,
 ): Promise<any> {
-  const res = await fetch(`/api/admin/analytics/sales?period=${period}`, {
+  const res = await fetch(`${API_BASE}/api/admin/analytics/sales?period=${period}`, {
     headers: authHeaders,
   });
 

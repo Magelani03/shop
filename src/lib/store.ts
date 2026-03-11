@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+const API_BASE = import.meta.env.VITE_API_ORIGIN ?? "";
+
 export interface Product {
   id: number;
   name: string;
@@ -27,6 +29,8 @@ export interface User {
   email: string;
   phone?: string;
   avatar?: string;
+  address?: string;
+  city?: string;
   role: "USER" | "ADMIN";
 }
 
@@ -155,6 +159,7 @@ interface AuthStore {
   isAdmin: () => boolean;
   showAuthModal: boolean;
   setShowAuthModal: (show: boolean) => void;
+  updateUser: (user: User) => void;
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -167,7 +172,7 @@ export const useAuthStore = create<AuthStore>()(
 
       login: async (email: string, password: string) => {
         try {
-          const response = await fetch("/api/auth/login", {
+          const response = await fetch(`${API_BASE}/api/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password }),
@@ -196,7 +201,7 @@ export const useAuthStore = create<AuthStore>()(
         phone?: string,
       ) => {
         try {
-          const response = await fetch("/api/auth/register", {
+          const response = await fetch(`${API_BASE}/api/auth/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name, email, password, phone }),
@@ -234,6 +239,10 @@ export const useAuthStore = create<AuthStore>()(
           user,
           isAuthenticated: true,
         });
+      },
+
+      updateUser: (user: User) => {
+        set({ user });
       },
 
       isAdmin: () => {
@@ -275,7 +284,7 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
 
     set({ loading: true });
     try {
-      const response = await fetch("/api/orders/my", {
+      const response = await fetch(`${API_BASE}/api/orders/my`, {
         headers: {
           "Content-Type": "application/json",
           ...getAuthHeaders(),
@@ -298,7 +307,7 @@ export const useOrderStore = create<OrderStore>((set, get) => ({
 
     set({ loading: true });
     try {
-      const response = await fetch("/api/orders", {
+      const response = await fetch(`${API_BASE}/api/orders`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -344,7 +353,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   fetchSettings: async () => {
     set({ loading: true });
     try {
-      const response = await fetch("/api/settings");
+      const response = await fetch(`${API_BASE}/api/settings`);
       if (response.ok) {
         const settings = await response.json();
         set({ settings });
@@ -403,7 +412,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
 
     set({ loading: true });
     try {
-      const response = await fetch("/api/admin/stats", {
+      const response = await fetch(`${API_BASE}/api/admin/stats`, {
         headers: { ...getAuthHeaders() },
       });
 
@@ -424,7 +433,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     set({ loading: true });
     try {
       const params = new URLSearchParams(filters);
-      const response = await fetch(`/api/admin/products?${params}`, {
+      const response = await fetch(`${API_BASE}/api/admin/products?${params}`, {
         headers: { ...getAuthHeaders() },
       });
 
@@ -445,7 +454,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     set({ loading: true });
     try {
       const params = new URLSearchParams(filters);
-      const response = await fetch(`/api/admin/orders?${params}`, {
+      const response = await fetch(`${API_BASE}/api/admin/orders?${params}`, {
         headers: { ...getAuthHeaders() },
       });
 
@@ -466,7 +475,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     set({ loading: true });
     try {
       const params = new URLSearchParams(filters);
-      const response = await fetch(`/api/admin/users?${params}`, {
+      const response = await fetch(`${API_BASE}/api/admin/users?${params}`, {
         headers: { ...getAuthHeaders() },
       });
 
@@ -485,7 +494,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     if (!useAuthStore.getState().isAdmin()) return false;
 
     try {
-      const response = await fetch(`/api/admin/orders/${orderId}/status`, {
+      const response = await fetch(`${API_BASE}/api/admin/orders/${orderId}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -514,7 +523,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     if (!useAuthStore.getState().isAdmin()) return null;
 
     try {
-      const response = await fetch(`/api/admin/orders/${orderId}/whatsapp`, {
+      const response = await fetch(`${API_BASE}/api/admin/orders/${orderId}/whatsapp`, {
         method: "POST",
         headers: { ...getAuthHeaders() },
       });

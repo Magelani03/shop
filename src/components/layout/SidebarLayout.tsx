@@ -1,8 +1,8 @@
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, LogOut, ShoppingBag } from 'lucide-react';
+import { Search, LogOut, ShoppingBag, LayoutDashboard } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { useCartStore } from '@/lib/store';
+import { useCartStore, useAuthStore } from '@/lib/store';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
 
@@ -13,15 +13,27 @@ interface SidebarLayoutProps {
 const SidebarLayout = ({ children }: SidebarLayoutProps) => {
   const totalItems = useCartStore((state) => state.getTotalItems());
   const setDrawerOpen = useCartStore((state) => state.setDrawerOpen);
+  const isAdmin = useAuthStore((state) => state.isAdmin);
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Top Header */}
       <header className="sticky top-0 z-50 w-full bg-background border-b border-border">
         <div className="flex h-14 items-center justify-between px-4">
-          <Link to="/" className="font-display text-2xl font-bold text-foreground tracking-wide">
-            SHOP
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link to="/" className="font-display text-2xl font-bold text-foreground tracking-wide">
+              SHOP
+            </Link>
+            {isAdmin() && (
+              <Link
+                to="/admin"
+                className="hidden sm:inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary text-xs px-3 py-1 hover:bg-primary/20 transition-colors"
+              >
+                <LayoutDashboard className="h-3 w-3" />
+                <span>Admin Panel</span>
+              </Link>
+            )}
+          </div>
 
           <div className="flex items-center gap-4">
             <div className="relative">

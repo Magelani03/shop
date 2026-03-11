@@ -110,6 +110,52 @@ app.post("/", async (c) => {
     }
 });
 
+app.get("/:id/whatsapp", async (c) => {
+    try {
+        const prisma = c.get('prisma');
+        const id = parseInt(c.req.param("id"));
+        const user = c.get('user');
+
+        const order = await prisma.order.findUnique({
+            where: { id, userId: user.id },
+            include: { orderItems: { include: { product: true } } },
+        });
+
+        if (!order) {
+            return c.json({ error: "Order not found" }, 404);
+        }
+
+        const settings = await prisma.settings.findMany();
+        const settingsMap = settings.reduce((acc: any, setting) => {
+            acc[setting.key] = setting.value;
+            return acc;
+        }, {});
+
+        const whatsappNumber = settingsMap.admin_whatsapp;
+
+        if (!whatsappNumber) {
+            return c.json({ error: "WhatsApp number not configured" }, 400);
+        }
+
+        // Create WhatsApp message
+        const itemsList = order.orderItems
+            .map(
+                (item) =>
+                    `• ${item.product.name} (Qty: ${item.quantity}) - N$${item.price}`,
+            )
+            .join("\n");
+
+        const message = `Halo! I'd like to place an order:\n\nOrder #${order.id}\nCustomer: ${order.customerName}\nPhone: ${order.customerPhone}\n\nItems:\n${itemsList}\n\nTotal: N$${order.total}\n\nShipping Address:\n${order.shippingAddress}\n\n${order.notes ? `Notes: ${order.notes}` : ""}`;
+
+        const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
+
+        return c.json({ whatsappUrl, message });
+    } catch (error) {
+        console.error("Error generating WhatsApp message:", error);
+        return c.json({ error: "Failed to generate WhatsApp message" }, 500);
+    }
+});
+
 app.get("/my", async (c) => {
     try {
         const prisma = c.get('prisma');

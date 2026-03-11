@@ -71,8 +71,8 @@ app.get("/products", async (c) => {
 
         if (search) {
             where.OR = [
-                { name: { contains: search, mode: "insensitive" } },
-                { description: { contains: search, mode: "insensitive" } },
+                { name: { contains: search } },
+                { description: { contains: search } },
             ];
         }
 
@@ -200,9 +200,9 @@ app.get("/orders", async (c) => {
 
         if (search) {
             where.OR = [
-                { customerName: { contains: search, mode: "insensitive" } },
-                { customerEmail: { contains: search, mode: "insensitive" } },
-                { customerPhone: { contains: search, mode: "insensitive" } },
+                { customerName: { contains: search } },
+                { customerEmail: { contains: search } },
+                { customerPhone: { contains: search } },
             ];
         }
 
@@ -316,8 +316,8 @@ app.get("/users", async (c) => {
 
         if (search) {
             where.OR = [
-                { name: { contains: search, mode: "insensitive" } },
-                { email: { contains: search, mode: "insensitive" } },
+                { name: { contains: search } },
+                { email: { contains: search } },
             ];
         }
 

@@ -1,14 +1,15 @@
 import { Minus, Plus, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import SidebarLayout from '@/components/layout/SidebarLayout';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCartStore, useAuthStore } from '@/lib/store';
-import { toast } from 'sonner';
 
 const SHIPPING_FEE = 150;
 
 const Cart = () => {
-  const { items, updateQuantity, removeFromCart, getTotalPrice, clearCart } = useCartStore();
+  const navigate = useNavigate();
+  const { items, updateQuantity, removeFromCart, getTotalPrice } = useCartStore();
   const subtotal = getTotalPrice();
   const total = subtotal + SHIPPING_FEE;
 
@@ -20,8 +21,7 @@ const Cart = () => {
       return;
     }
 
-    toast.success('Order placed successfully!');
-    clearCart();
+    navigate("/checkout");
   };
 
   if (items.length === 0) {

@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
-import { User, Home, Package, Info, Mail, Tag } from 'lucide-react';
+import { User, Home, Package, Info, Mail, Tag, LayoutDashboard } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/lib/store';
 
 interface SidebarProps {
   className?: string;
@@ -8,8 +9,9 @@ interface SidebarProps {
 
 const Sidebar = ({ className }: SidebarProps) => {
   const location = useLocation();
-  
-  const navLinks = [
+  const isAdmin = useAuthStore((state) => state.isAdmin);
+
+  const navLinks: { name: string; path: string; icon: React.ComponentType<any> }[] = [
     { name: 'Profile', path: '/profile', icon: User },
     { name: 'Home', path: '/', icon: Home },
     { name: 'Products', path: '/products', icon: Package },
@@ -17,6 +19,11 @@ const Sidebar = ({ className }: SidebarProps) => {
     { name: 'Contact', path: '/contact', icon: Mail },
     { name: 'Sales', path: '/sales', icon: Tag },
   ];
+
+  if (isAdmin()) {
+    // Insert Admin link after Profile
+    navLinks.splice(1, 0, { name: 'Admin', path: '/admin', icon: LayoutDashboard });
+  }
 
   return (
     <aside className={cn("w-40 min-h-screen bg-sage-light py-8", className)}>

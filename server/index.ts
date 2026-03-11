@@ -38,6 +38,7 @@ app.use('*', async (c, next) => {
 
 // Health check
 app.get('/api/health', (c) => {
+  console.log("DB Binding:", c.env.DB);
   return c.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 

@@ -11,7 +11,10 @@
     "preview": "vite preview",
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:generate": "prisma generate",
-    "worker:dev": "wrangler dev",
+    "worker:dev": "wrangler dev --port 4000",
+    "db:migrate:local": "wrangler d1 execute shop-db-v2 --local --file=./prisma/d1_migration.sql",
+    "db:seed:local": "wrangler d1 execute shop-db-v2 --local --file=./prisma/seed_d1.sql",
+    "db:setup:local": "npm run db:migrate:local && npm run db:seed:local",
     "worker:deploy": "wrangler deploy",
     "pages:deploy": "npm run build && wrangler pages deploy ./dist"
   },
