@@ -75,9 +75,6 @@
     "zod": "^3.25.76",
     "zustand": "^5.0.9"
   },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
-  },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260301.1",
     "@eslint/js": "^9.32.0",
