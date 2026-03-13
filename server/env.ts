@@ -1,20 +1,17 @@
 /**
- * Helpers to read env from either Cloudflare (c.env) or Vercel/Node (c.get variables).
- * Use these in routes so the same code works on Workers and Vercel.
+ * Helpers to read JWT_SECRET and ALLOWED_ORIGINS from Hono context.
+ * On Vercel they are set as variables (c.get); supports any context shape.
  */
 import type { Context } from "hono";
 
-type EnvLike = { JWT_SECRET?: string; ALLOWED_ORIGINS?: string };
-type VarLike = { JWT_SECRET?: string; ALLOWED_ORIGINS?: string };
-
-export function getJwtSecret(c: Context<{ Bindings?: EnvLike; Variables?: VarLike }>): string {
-  const fromEnv = (c.env as EnvLike)?.JWT_SECRET;
-  const fromVar = (c.get as (k: string) => string)?.("JWT_SECRET");
-  return fromEnv ?? fromVar ?? "";
+export function getJwtSecret(c: Context): string {
+  const env = c.env as { JWT_SECRET?: string } | undefined;
+  const fromVar = typeof c.get === "function" ? (c.get as (k: string) => string)("JWT_SECRET") : undefined;
+  return env?.JWT_SECRET ?? fromVar ?? "";
 }
 
-export function getAllowedOrigins(c: Context<{ Bindings?: EnvLike; Variables?: VarLike }>): string | undefined {
-  const fromEnv = (c.env as EnvLike)?.ALLOWED_ORIGINS;
-  const fromVar = (c.get as (k: string) => string)?.("ALLOWED_ORIGINS");
-  return fromEnv ?? fromVar;
+export function getAllowedOrigins(c: Context): string | undefined {
+  const env = c.env as { ALLOWED_ORIGINS?: string } | undefined;
+  const fromVar = typeof c.get === "function" ? (c.get as (k: string) => string)("ALLOWED_ORIGINS") : undefined;
+  return env?.ALLOWED_ORIGINS ?? fromVar;
 }

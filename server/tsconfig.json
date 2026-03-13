@@ -3,9 +3,6 @@
         "target": "ESNext",
         "module": "ESNext",
         "moduleResolution": "bundler",
-        "types": [
-            "@cloudflare/workers-types"
-        ],
         "esModuleInterop": true,
         "skipLibCheck": true,
         "strict": false,

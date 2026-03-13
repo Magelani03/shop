@@ -64,7 +64,7 @@ This document lists the tools, frameworks, and technologies used in this project
 
 ### Hono
 - **What it is:** Lightweight web framework (routes, middleware, request/response).
-- **Why we use it:** Designed for edge runtimes (e.g. Cloudflare Workers), small bundle, and familiar Express-like API. Fits Workers + D1 better than Express.
+- **Why we use it:** Small bundle, familiar Express-like API; runs on Vercel serverless via `@hono/node-server/vercel`.
 
 ### Vercel (API hosting)
 - **What it is:** Serverless functions and hosting (Node.js).
@@ -95,15 +95,15 @@ This document lists the tools, frameworks, and technologies used in this project
 ## DevOps / Tooling
 
 ### Wrangler
-- **What it is:** CLI for Cloudflare Workers, D1, and Pages.
-- **Why we use it:** Run the Worker locally (`wrangler dev`), run D1 migrations and seeds (`wrangler d1 execute`), and deploy the Worker and D1. Required for this stack.
+- **What it is:** CLI for Cloudflare Pages (optional).
+- **Why we use it:** Deploy the frontend to Cloudflare Pages with `wrangler pages deploy ./dist --project-name=shop`. The API and database are on Vercel.
 
 ### ESLint
 - **What it is:** Linter for JavaScript/TypeScript.
 - **Why we use it:** Enforces code style and catches common mistakes.
 
 ### npm scripts
-- **Key scripts:** `dev` (Vite frontend), `worker:dev` (API on port 4000), `db:setup:local` (migrate + seed local D1), `build` (Vite build), `worker:deploy`, `pages:deploy`.
+- **Key scripts:** `dev` (Vite frontend), `build` (Prisma generate + Vite build), `prisma:migrate`, `pages:deploy` (frontend to Cloudflare Pages). API on Vercel: `npx vercel dev` locally.
 
 ---
 
@@ -119,151 +119,17 @@ This document lists the tools, frameworks, and technologies used in this project
 | Components  | shadcn/Radix      | Buttons, inputs, dialogs, etc.    |
 | State       | Zustand           | Cart, auth, orders                |
 | API layer   | Hono              | HTTP API and middleware           |
-| Runtime     | Cloudflare Workers| Run API at the edge               |
-| Database    | D1 (SQLite)       | Persistent data                  |
-| ORM         | Prisma + D1 adapter| Type-safe DB access              |
+| Runtime     | Vercel (Node)     | Serverless API                   |
+| Database    | PostgreSQL        | Persistent data (Neon, etc.)     |
+| ORM         | Prisma            | Type-safe DB access              |
 | Auth        | JWT + bcryptjs    | Login and protected routes       |
-| Deploy      | Wrangler          | Workers, D1, and Pages            |
+| Deploy      | Vercel + Wrangler | API on Vercel; frontend on Pages |
 
 ---
 
-# Deploying to Cloudflare (Run on the Cloud)
+# Deployment
 
-To run the full site on Cloudflare you deploy two things: the **API** (Worker + D1) and the **frontend** (Pages). The frontend talks to the API using an environment variable so it works from any domain.
+**API and database:** Vercel (PostgreSQL). See [DEPLOY_CHECKLIST.md](./DEPLOY_CHECKLIST.md).
 
-## Prerequisites
+**Frontend:** Cloudflare Pages. Set `VITE_API_ORIGIN` to your Vercel URL in Pages project settings. The app uses it in `src/lib/api.ts` and `src/lib/store.ts`.
 
-- Node.js and npm installed.
-- [Wrangler](https://developers.cloudflare.com/workers/wrangler/install-and-update/) installed (`npm i -g wrangler` or use `npx wrangler`).
-- A Cloudflare account. Log in with: `wrangler login`.
-
----
-
-## Step 1: Create a D1 database (production)
-
-1. In the [Cloudflare dashboard](https://dash.cloudflare.com), go to **Workers & Pages** → **D1** → **Create database**.
-2. Name it (e.g. `shop-db-v2`) and create it.
-3. Open the database and copy its **Database ID** (UUID).
-
-Update `wrangler.jsonc` with this ID:
-
-```jsonc
-"d1_databases": [
-  {
-    "binding": "DB",
-    "database_name": "shop-db-v2",
-    "database_id": "YOUR_REAL_DATABASE_ID_HERE"
-  }
-]
-```
-
-Replace `YOUR_REAL_DATABASE_ID_HERE` with the ID from the dashboard.
-
----
-
-## Step 2: Set production secrets and vars
-
-Use a **strong random value** for JWT in production (e.g. `openssl rand -base64 32`):
-
-```bash
-wrangler secret put JWT_SECRET
-```
-
-When prompted, paste your secret.
-
-Set the admin WhatsApp number (optional; can also be set in DB Settings):
-
-```bash
-wrangler secret put ADMIN_WHATSAPP
-# Enter e.g. +264814680418
-```
-
-If your frontend will be on a different domain than the Worker, set allowed origins (comma-separated, no spaces):
-
-```bash
-wrangler secret put ALLOWED_ORIGINS
-# e.g. https://your-shop.pages.dev,https://yourdomain.com
-```
-
----
-
-## Step 3: Run migrations and seed on the production D1
-
-From the project root:
-
-```bash
-wrangler d1 execute shop-db-v2 --remote --file=./prisma/d1_migration.sql
-wrangler d1 execute shop-db-v2 --remote --file=./prisma/seed_d1.sql
-```
-
-If the migration fails because tables already exist, that’s okay; ensure the seed ran so you have admin user, products, and settings.
-
----
-
-## Step 4: Deploy the API (Worker)
-
-```bash
-npm run worker:deploy
-```
-
-Note the Worker URL (e.g. `https://shop-api.<your-subdomain>.workers.dev`). The frontend will call this URL in production.
-
----
-
-## Step 5: Deploy the frontend (Pages)
-
-The frontend must know the API URL in production. We use the `VITE_API_ORIGIN` environment variable.
-
-1. Build with the production API URL (replace with your real Worker URL):
-
-   **PowerShell:**
-   ```powershell
-   $env:VITE_API_ORIGIN="https://shop-api.<your-subdomain>.workers.dev"; npm run build
-   ```
-
-   **Bash:**
-   ```bash
-   VITE_API_ORIGIN=https://shop-api.<your-subdomain>.workers.dev npm run build
-   ```
-
-2. Deploy the built output to Cloudflare Pages:
-
-   ```bash
-   npx wrangler pages deploy ./dist --project-name=shop
-   ```
-
-   If the Pages project doesn’t exist yet, create it in the dashboard (**Workers & Pages** → **Create** → **Pages** → **Connect to Git** or **Direct Upload**). For direct upload, use the same `wrangler pages deploy ./dist --project-name=shop` (project name must match).
-
-3. **If you use Git integration:** set `VITE_API_ORIGIN` in the Pages project settings (**Settings** → **Environment variables**) for the Production environment, then trigger a new build so the build step uses it.
-
----
-
-## Step 6: Allow the frontend origin in the Worker
-
-Ensure the Worker allows your frontend origin in CORS. If you set `ALLOWED_ORIGINS` in Step 2 to your Pages URL (and custom domain if any), you’re set. Otherwise add the Pages URL (e.g. `https://shop.pages.dev`) to `ALLOWED_ORIGINS` and redeploy the Worker.
-
----
-
-## Step 7: Optional – Custom domain
-
-- **Worker (API):** In the dashboard, open your Worker → **Settings** → **Triggers** → **Custom Domains** (e.g. `api.yourdomain.com`).
-- **Pages (frontend):** In the Pages project → **Custom domains** (e.g. `www.yourdomain.com`).
-
-Then set `VITE_API_ORIGIN` to your API domain (e.g. `https://api.yourdomain.com`) and rebuild/redeploy the frontend.
-
----
-
-## Quick reference after first deploy
-
-| Task | Command |
-|------|--------|
-| Deploy API | `npm run worker:deploy` |
-| Deploy frontend | Set `VITE_API_ORIGIN`, then `npm run build` and `npx wrangler pages deploy ./dist --project-name=shop` |
-| Run DB migration (remote) | `wrangler d1 execute shop-db-v2 --remote --file=./prisma/d1_migration.sql` |
-| Seed DB (remote) | `wrangler d1 execute shop-db-v2 --remote --file=./prisma/seed_d1.sql` |
-
----
-
-## Making the frontend use the API URL in production
-
-The app uses relative `/api` URLs in development (Vite proxies to the Worker). In production, the frontend is served from Pages and must call the Worker URL. Adding a small helper in `src/lib/api.ts` and using it in all `fetch` calls ensures that when `VITE_API_ORIGIN` is set (at build time), all API requests go to the deployed Worker. The codebase already uses `VITE_API_ORIGIN`: `src/lib/api.ts` and `src/lib/store.ts` prefix all API requests with this value when it is set at build time, so the same app works in dev (relative `/api` via Vite proxy) and in production (Worker URL).

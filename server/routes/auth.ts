@@ -57,7 +57,7 @@ app.post("/login", async (c) => {
         console.error("Login error:", error);
         const msg = error instanceof Error ? error.message : String(error);
         if (msg.includes("does not exist") || msg.includes("no such table")) {
-            return c.json({ error: "Database not set up. Run: npm run db:setup:local" }, 503);
+            return c.json({ error: "Database not set up. Run: npx prisma migrate dev && npx prisma db seed" }, 503);
         }
         return c.json({ error: "Internal server error" }, 500);
     }
@@ -113,7 +113,7 @@ app.post("/register", async (c) => {
         console.error("Registration error:", error);
         const msg = error instanceof Error ? error.message : String(error);
         if (msg.includes("does not exist") || msg.includes("no such table")) {
-            return c.json({ error: "Database not set up. Run: npm run db:setup:local" }, 503);
+            return c.json({ error: "Database not set up. Run: npx prisma migrate dev && npx prisma db seed" }, 503);
         }
         return c.json({ error: "Internal server error" }, 500);
     }

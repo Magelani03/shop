@@ -14,17 +14,19 @@ cd <YOUR_PROJECT_NAME>
 # Step 3: Install the necessary dependencies.
 npm i
 
-# Step 4: Set up the local database (required for auth, orders, products).
-npm run db:setup:local
+# Step 4: Set up the database (required for auth, orders, products).
+# Set DATABASE_URL in .env to your PostgreSQL URL (e.g. Neon), then:
+npx prisma migrate dev
+npx prisma db seed
 
-# Step 5: Start the API worker (in one terminal).
-npm run worker:dev
+# Step 5: Start the API (in one terminal).
+npx vercel dev
 
 # Step 6: Start the frontend (in another terminal).
 npm run dev
 ```
 
-**Important:** The app uses Cloudflare D1 (SQLite) for the database. For local development you must run `npm run db:setup:local` once before the API will store users, orders, or products. That command creates the tables and seeds sample data (admin user, products, settings).
+**Important:** The app uses PostgreSQL (e.g. Neon, Vercel Postgres). Set `DATABASE_URL` in `.env`, then run `npx prisma migrate dev` and `npx prisma db seed` once. Use `npx vercel dev` for the API locally.
 
 ## What technologies are used for this project?
 
