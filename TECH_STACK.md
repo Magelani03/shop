@@ -1,6 +1,8 @@
 # Tech Stack & Deployment
 
-This document lists the tools, frameworks, and technologies used in this project and why they were chosen. It also explains how to run the site on Cloudflare.
+This document lists the tools, frameworks, and technologies used in this project and why they were chosen.
+
+**Current deployment:** **Backend (API)** runs on **Vercel** with **PostgreSQL**. **Frontend** runs on **Cloudflare Pages**. See [DEPLOY_CHECKLIST.md](./DEPLOY_CHECKLIST.md) for step-by-step deploy instructions.
 
 ---
 
@@ -64,17 +66,13 @@ This document lists the tools, frameworks, and technologies used in this project
 - **What it is:** Lightweight web framework (routes, middleware, request/response).
 - **Why we use it:** Designed for edge runtimes (e.g. Cloudflare Workers), small bundle, and familiar Express-like API. Fits Workers + D1 better than Express.
 
-### Cloudflare Workers
-- **What it is:** Serverless execution environment on Cloudflare’s edge.
-- **Why we use it:** Runs the API (Hono app) globally with no server to manage; scales automatically and pairs with D1 and Wrangler.
+### Vercel (API hosting)
+- **What it is:** Serverless functions and hosting (Node.js).
+- **Why we use it:** Hosts the Hono API in `api/[[...path]].ts`; same codebase runs locally with `vercel dev` and in production. Pairs with PostgreSQL (Vercel Postgres, Neon, or Supabase).
 
 ### Prisma
 - **What it is:** ORM and schema tool (models, migrations, type-safe client).
-- **Why we use it:** Type-safe database access, clear schema in `prisma/schema.prisma`, and a single API for local SQLite and D1.
-
-### Prisma adapter for D1
-- **What it is:** `@prisma/adapter-d1` – connects Prisma Client to Cloudflare D1.
-- **Why we use it:** Lets us use Prisma’s API while D1 provides the actual SQLite database (local file or Cloudflare-hosted).
+- **Why we use it:** Type-safe database access with a single schema in `prisma/schema.prisma`. Production uses **PostgreSQL** (Vercel, Neon, Supabase, etc.).
 
 ### JWT (jsonwebtoken)
 - **What it is:** Creation and verification of JSON Web Tokens.
@@ -88,13 +86,9 @@ This document lists the tools, frameworks, and technologies used in this project
 
 ## Database
 
-### Cloudflare D1
-- **What it is:** Serverless SQL database (SQLite) on Cloudflare.
-- **Why we use it:** Works with Workers, no separate DB host, and supports local dev (SQLite file) and production (D1 in the cloud) via the same Prisma schema.
-
-### SQLite (via D1)
-- **What it is:** Embedded relational database (single file or D1-backed).
-- **Why we use it:** Schema and migrations are SQLite-compatible; D1 is SQLite at the edge, so one schema fits local and production.
+### PostgreSQL
+- **What it is:** Relational database (hosted e.g. by Vercel Postgres, Neon, Supabase).
+- **Why we use it:** Single Prisma schema with `provider = "postgresql"`; `DATABASE_URL` points to your Postgres instance. Run `prisma migrate dev` and `prisma db seed` to set up.
 
 ---
 

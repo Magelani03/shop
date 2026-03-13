@@ -1,6 +1,6 @@
 import type { Product, Order, User } from "@/lib/store";
 
-/** In production, set VITE_API_ORIGIN to your Worker URL (e.g. https://shop-api.xxx.workers.dev) so the frontend calls the right API. */
+/** In production, set VITE_API_ORIGIN to your Vercel app URL (e.g. https://your-project.vercel.app) so the frontend calls the right API. */
 const API_BASE = import.meta.env.VITE_API_ORIGIN ?? "";
 
 export interface ProductDto {

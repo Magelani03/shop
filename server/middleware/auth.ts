@@ -1,17 +1,20 @@
 import { createMiddleware } from "hono/factory";
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
+import { getJwtSecret } from "../env";
 
 type Bindings = {
-    JWT_SECRET: string;
+    JWT_SECRET?: string;
 };
 
 type Variables = {
     user: any;
     prisma: PrismaClient;
+    JWT_SECRET?: string;
+    ALLOWED_ORIGINS?: string;
 };
 
-export const authenticateToken = createMiddleware<{ Bindings: Bindings, Variables: Variables }>(async (c, next) => {
+export const authenticateToken = createMiddleware<{ Bindings: Bindings; Variables: Variables }>(async (c, next) => {
     const authHeader = c.req.header("authorization");
     const token = authHeader && authHeader.split(" ")[1];
 
@@ -19,8 +22,13 @@ export const authenticateToken = createMiddleware<{ Bindings: Bindings, Variable
         return c.json({ error: "Access denied. No token provided." }, 401);
     }
 
+    const secret = getJwtSecret(c);
+    if (!secret) {
+        return c.json({ error: "Server misconfiguration: JWT_SECRET not set" }, 500);
+    }
+
     try {
-        const decoded = jwt.verify(token, c.env.JWT_SECRET) as any;
+        const decoded = jwt.verify(token, secret) as any;
         const prisma = c.get('prisma');
         const user = await prisma.user.findUnique({
             where: { id: decoded.userId },

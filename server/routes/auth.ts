@@ -4,10 +4,10 @@ import jwt from "jsonwebtoken";
 import { Role, PrismaClient } from "@prisma/client";
 import { loginSchema, registerSchema } from "../schemas";
 import { authenticateToken } from "../middleware/auth";
+import { getJwtSecret } from "../env";
 
 type Bindings = {
-    DB: D1Database;
-    JWT_SECRET: string;
+    DB?: D1Database;
 };
 
 type Variables = {
@@ -36,7 +36,7 @@ app.post("/login", async (c) => {
             return c.json({ error: "Invalid credentials" }, 401);
         }
 
-        const token = jwt.sign({ userId: user.id }, c.env.JWT_SECRET, {
+        const token = jwt.sign({ userId: user.id }, getJwtSecret(c), {
             expiresIn: "7d",
         });
 
@@ -92,7 +92,7 @@ app.post("/register", async (c) => {
         const count = await prisma.user.count();
         console.log("Total users in this DB session:", count);
 
-        const token = jwt.sign({ userId: user.id }, c.env.JWT_SECRET, {
+        const token = jwt.sign({ userId: user.id }, getJwtSecret(c), {
             expiresIn: "7d",
         });
 

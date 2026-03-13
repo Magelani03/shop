@@ -1,0 +1,6 @@
+{
+  "buildCommand": "prisma generate",
+  "env": {
+    "NODEJS_HELPERS": "0"
+  }
+}

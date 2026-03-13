@@ -1,80 +1,93 @@
-# Deploy checklist
+# Deploy checklist — Backend on Vercel, Frontend on Cloudflare Pages
 
-Use this with [TECH_STACK.md](./TECH_STACK.md) (full Cloudflare deployment guide).
+- **API (backend):** Vercel serverless + PostgreSQL  
+- **Frontend:** Cloudflare Pages  
+- **Database:** PostgreSQL (e.g. Vercel Postgres, Neon, Supabase)
 
 ---
 
 ## One-time setup
 
-1. **Cloudflare account & Wrangler**
-   - Sign up at [Cloudflare](https://dash.cloudflare.com).
-   - Install Wrangler: `npm i -g wrangler` (or use `npx wrangler`).
-   - Log in: `wrangler login`.
+### 1. Database (PostgreSQL)
 
-2. **D1 database**
-   - Dashboard → **Workers & Pages** → **D1** → **Create database** (e.g. name: `shop-db-v2`).
-   - Copy the **Database ID** and put it in `wrangler.jsonc` under `d1_databases[0].database_id` (replace the existing value if you created a new DB).
+Create a Postgres database and get its connection URL:
 
-3. **Secrets (production)**
-   ```powershell
-   wrangler secret put JWT_SECRET    # use a strong random value, e.g. openssl rand -base64 32
-   wrangler secret put ADMIN_WHATSAPP   # e.g. +264814680418
-   wrangler secret put ALLOWED_ORIGINS  # e.g. https://shop.pages.dev,https://yourdomain.com
-   ```
+- **Vercel Postgres:** [Vercel Dashboard](https://vercel.com/dashboard) → Storage → Create Database → Postgres → copy `POSTGRES_URL` (or `DATABASE_URL`).
+- Or use [Neon](https://neon.tech) / [Supabase](https://supabase.com) and copy the connection string.
 
-4. **Run migrations and seed on production D1**
-   ```powershell
-   wrangler d1 execute shop-db-v2 --remote --file=./prisma/d1_migration.sql
-   wrangler d1 execute shop-db-v2 --remote --file=./prisma/seed_d1.sql
-   ```
+Set this as `DATABASE_URL` in your Vercel project (see step 3).
 
-5. **Create Pages project (if needed)**  
-   Dashboard → **Workers & Pages** → **Create** → **Pages** → **Direct Upload** (or **Connect to Git**). Project name: `shop` (must match `--project-name=shop`).
+### 2. Run migrations and seed (local, with your DB URL)
 
-6. **If using Pages with Git:** In the Pages project → **Settings** → **Builds & deployments** → **Build configuration**:
-   - **Build command:** `npm run build` (or `npm ci && npm run build` for a clean install).
-   - **Build output directory:** `dist`.
-   - Add **Environment variable** `VITE_API_ORIGIN` = your Worker URL (e.g. `https://shop-api.<subdomain>.workers.dev`) for **Production** (and Preview if needed).  
-   The repo uses `package-lock.json` only (no `bun.lockb`) so Cloudflare will use npm.
+```powershell
+cd c:\Users\shish\shop
+$env:DATABASE_URL = "postgresql://user:password@host:5432/dbname?sslmode=require"
+npx prisma migrate dev --name init
+npx prisma db seed
+```
+
+Or run migrations on the hosted DB (e.g. Neon SQL editor or `prisma migrate deploy` with `DATABASE_URL` set).
+
+### 3. Deploy API to Vercel
+
+- Connect the repo to Vercel ([vercel.com](https://vercel.com) → Add New Project).
+- In the project **Settings → Environment variables**, add:
+
+| Name             | Value                    | Environment |
+|------------------|--------------------------|-------------|
+| `DATABASE_URL`   | Your Postgres URL        | All         |
+| `JWT_SECRET`     | Strong random secret     | All         |
+| `ALLOWED_ORIGINS`| Your frontend URL(s), comma-separated (e.g. `https://shop.pages.dev`) | Production (and Preview if needed) |
+| `ADMIN_WHATSAPP` | Optional, e.g. `+1234567890` | All   |
+
+- Deploy. Your API will be at `https://your-project.vercel.app/api` (e.g. `https://your-project.vercel.app/api/health`).
+
+**Note:** Set `NODEJS_HELPERS=0` in Vercel if you see 500 errors on POST requests (see [Vercel / Hono docs](https://hono.dev/docs/getting-started/vercel)). It’s already in `vercel.json` for this project.
+
+### 4. Frontend on Cloudflare Pages
+
+- **Cloudflare:** Workers & Pages → Create → Pages → Connect to Git (or Direct Upload). Project name e.g. `shop`.
+- In the Pages project **Settings → Build configuration**:
+  - **Build command:** `npm run build` (or `npm ci && npm run build`).
+  - **Build output directory:** `dist`.
+- **Environment variables** (Production):
+  - `VITE_API_ORIGIN` = your **Vercel** API URL, e.g. `https://your-project.vercel.app`  
+    (no `/api` at the end — the app adds `/api` to paths).
 
 ---
 
 ## Deploy (every time)
 
-**Option A – Script (API + frontend)**
+**API (Vercel)**  
+Push to the branch connected to Vercel, or run `vercel --prod` from the project root.
 
-From project root:
-
-```powershell
-# Deploy API, then build and deploy frontend (you'll need the Worker URL for the frontend)
-.\scripts\deploy.ps1
-```
-
-After the API deploys, the script will ask for the Worker URL. Or pass it so the frontend build uses it:
+**Frontend (Cloudflare Pages)**  
+Push to the branch connected to Pages, or build and upload:
 
 ```powershell
-.\scripts\deploy.ps1 -WorkerUrl "https://shop-api.YOUR-SUBDOMAIN.workers.dev"
-```
-
-**Option B – Manual**
-
-```powershell
-# 1. Deploy API
-npm run worker:deploy
-
-# 2. Build frontend with your Worker URL, then deploy Pages
-$env:VITE_API_ORIGIN = "https://shop-api.YOUR-SUBDOMAIN.workers.dev"
+$env:VITE_API_ORIGIN = "https://your-project.vercel.app"
 npm run build
-npm run pages:deploy
+npx wrangler pages deploy ./dist --project-name=shop
 ```
-
-**Only API:** `.\scripts\deploy.ps1 -ApiOnly` or `npm run worker:deploy`  
-**Only frontend:** `.\scripts\deploy.ps1 -FrontendOnly -WorkerUrl "https://shop-api.xxx.workers.dev"`
 
 ---
 
 ## After first deploy
 
 - **Frontend:** `https://shop.pages.dev` (or your custom domain).
-- **API:** `https://shop-api.<your-subdomain>.workers.dev` (or custom domain).
-- Ensure `ALLOWED_ORIGINS` includes your frontend URL so CORS works.
+- **API:** `https://your-project.vercel.app/api` (or your Vercel URL).
+- Ensure `ALLOWED_ORIGINS` in Vercel includes your frontend URL so CORS works.
+
+---
+
+## Local development
+
+- **API:** Run the Vercel dev server (uses the same Hono app and `api/`):
+
+  ```powershell
+  npx vercel dev
+  ```
+
+  Set `.env` or `.env.local` with `DATABASE_URL`, `JWT_SECRET`, and optionally `ALLOWED_ORIGINS`.
+
+- **Frontend:** `npm run dev` (Vite). Point the proxy or `VITE_API_ORIGIN` to `http://localhost:3000` if using `vercel dev`, so the app calls the local API.
