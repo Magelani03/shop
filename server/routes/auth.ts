@@ -7,7 +7,7 @@ import { authenticateToken } from "../middleware/auth";
 import { getJwtSecret } from "../env";
 
 type Bindings = {
-    DB?: D1Database;
+    DB?: unknown;
 };
 
 type Variables = {

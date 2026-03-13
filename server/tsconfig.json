@@ -13,6 +13,7 @@
         "outDir": "../dist-server"
     },
     "include": [
-        "."
+        ".",
+        "../api"
     ]
 }

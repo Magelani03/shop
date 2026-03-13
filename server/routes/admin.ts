@@ -4,7 +4,7 @@ import { authenticateToken, requireAdmin } from "../middleware/auth";
 import { productSchema } from "../schemas";
 
 type Bindings = {
-    DB: D1Database;
+    DB?: unknown;
 };
 
 type Variables = {

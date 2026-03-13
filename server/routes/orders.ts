@@ -5,7 +5,7 @@ import { createOrderSchema } from "../schemas";
 import { PrismaClient } from "@prisma/client";
 
 type Bindings = {
-    DB: D1Database;
+    DB?: unknown;
 };
 
 type Variables = {
