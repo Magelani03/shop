@@ -1,5 +1,7 @@
 {
-  "buildCommand": "prisma generate",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "outputDirectory": "dist",
   "env": {
     "NODEJS_HELPERS": "0"
   }
