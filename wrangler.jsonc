@@ -14,7 +14,13 @@
 		{
 			"binding": "DB",
 			"database_name": "shop-db-v2",
-			"database_id": "6ac8e1a9-98ac-4531-9774-70ca98ed6166"
+			"database_id": "41d4530f-8094-4988-8b85-fa060c8bbb2a"
+		},
+		{
+			"binding": "Shop",
+			"database_name": "Shop",
+			"database_id": "41d4530f-8094-4988-8b85-fa060c8bbb2a",
+			"remote": true
 		}
 	],
 	"observability": {

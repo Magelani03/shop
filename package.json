@@ -16,7 +16,7 @@
     "db:seed:local": "wrangler d1 execute shop-db-v2 --local --file=./prisma/seed_d1.sql",
     "db:setup:local": "npm run db:migrate:local && npm run db:seed:local",
     "worker:deploy": "wrangler deploy",
-    "pages:deploy": "npm run build && wrangler pages deploy ./dist"
+    "pages:deploy": "wrangler pages deploy ./dist --project-name=shop"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
