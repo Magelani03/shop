@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { OrderStatus } from "@prisma/client";
-import { authenticateToken } from "../middleware/auth";
-import { createOrderSchema } from "../schemas";
+import { authenticateToken } from "../middleware/auth.js";
+import { createOrderSchema } from "../schemas/index.js";
 import { PrismaClient } from "@prisma/client";
 
 type Bindings = {

@@ -2,9 +2,9 @@ import { Hono } from "hono";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { Role, PrismaClient } from "@prisma/client";
-import { loginSchema, registerSchema } from "../schemas";
-import { authenticateToken } from "../middleware/auth";
-import { getJwtSecret } from "../env";
+import { loginSchema, registerSchema } from "../schemas/index.js";
+import { authenticateToken } from "../middleware/auth.js";
+import { getJwtSecret } from "../env.js";
 
 type Bindings = {
     DB?: unknown;

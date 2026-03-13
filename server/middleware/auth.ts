@@ -1,7 +1,7 @@
 import { createMiddleware } from "hono/factory";
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
-import { getJwtSecret } from "../env";
+import { getJwtSecret } from "../env.js";
 
 type Bindings = {
     JWT_SECRET?: string;

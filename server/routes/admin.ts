@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { Role, OrderStatus, PrismaClient } from "@prisma/client";
-import { authenticateToken, requireAdmin } from "../middleware/auth";
-import { productSchema } from "../schemas";
+import { authenticateToken, requireAdmin } from "../middleware/auth.js";
+import { productSchema } from "../schemas/index.js";
 
 type Bindings = {
     DB?: unknown;

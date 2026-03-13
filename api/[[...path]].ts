@@ -3,6 +3,6 @@
  * Backend runs on Vercel with PostgreSQL (DATABASE_URL); set JWT_SECRET and ALLOWED_ORIGINS in Vercel env.
  */
 import { handle } from "@hono/node-server/vercel";
-import app from "../server/app-vercel";
+import app from "../server/app-vercel.js";
 
 export default handle(app);

@@ -5,12 +5,12 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { PrismaClient } from "@prisma/client";
-import products from "./routes/products";
-import auth from "./routes/auth";
-import orders from "./routes/orders";
-import settings from "./routes/settings";
-import admin from "./routes/admin";
-import { getAllowedOrigins } from "./env";
+import products from "./routes/products.js";
+import auth from "./routes/auth.js";
+import orders from "./routes/orders.js";
+import settings from "./routes/settings.js";
+import admin from "./routes/admin.js";
+import { getAllowedOrigins } from "./env.js";
 
 type Variables = {
   prisma: PrismaClient;
