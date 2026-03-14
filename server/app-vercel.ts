@@ -10,7 +10,11 @@ import auth from "./routes/auth.js";
 import orders from "./routes/orders.js";
 import settings from "./routes/settings.js";
 import admin from "./routes/admin.js";
-import { getAllowedOrigins } from "./env.js";
+
+// Singleton for serverless (avoid connection pool exhaustion)
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
+const prisma = globalForPrisma.prisma ?? new PrismaClient();
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 type Variables = {
   prisma: PrismaClient;
@@ -20,29 +24,38 @@ type Variables = {
 
 const app = new Hono<{ Bindings: Record<string, never>; Variables: Variables }>();
 
-// Prisma with DATABASE_URL (PostgreSQL on Vercel)
+// CORS first so preflight (OPTIONS) always gets headers before any other logic
+const defaultOrigins = [
+  "http://localhost:8080",
+  "http://localhost:5173",
+  "https://shop-5ns.pages.dev",
+];
 app.use("*", async (c, next) => {
-  const prisma = new PrismaClient();
+  const originsRaw = process.env.ALLOWED_ORIGINS ?? "";
+  const allowedList = originsRaw
+    ? originsRaw.split(",").map((o) => o.trim()).filter(Boolean)
+    : [];
+  const origins = allowedList.length > 0 ? allowedList : defaultOrigins;
+  const originFn = (origin: string) => {
+    if (!origin) return origins[0] ?? "*";
+    if (origins.includes(origin)) return origin;
+    // Any Cloudflare Pages origin
+    if (/^https:\/\/[\w.-]+\.pages\.dev$/i.test(origin)) return origin;
+    return origins[0] ?? "*";
+  };
+  return cors({
+    origin: originFn,
+    allowMethods: ["GET", "HEAD", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+    maxAge: 86400,
+  })(c, next);
+});
+
+app.use("*", async (c, next) => {
   c.set("prisma", prisma);
   c.set("JWT_SECRET", process.env.JWT_SECRET ?? "");
   c.set("ALLOWED_ORIGINS", process.env.ALLOWED_ORIGINS ?? "");
   await next();
-});
-
-app.use("*", async (c, next) => {
-  const originsRaw = getAllowedOrigins(c);
-  const allowedList = originsRaw
-    ? originsRaw.split(",").map((o) => o.trim()).filter(Boolean)
-    : [];
-  const defaultOrigins = ["http://localhost:8080", "http://localhost:5173"];
-  const origins = allowedList.length > 0 ? allowedList : defaultOrigins;
-  // Allow request origin if in list, or any Cloudflare Pages origin (*.pages.dev)
-  const originFn = (origin: string) => {
-    if (origins.includes(origin)) return origin;
-    if (/^https:\/\/[\w.-]+\.pages\.dev$/i.test(origin)) return origin;
-    return origins[0];
-  };
-  return cors({ origin: originFn })(c, next);
 });
 
 app.get("/api/health", (c) => {
