@@ -3,7 +3,6 @@
  * and process.env for JWT_SECRET and ALLOWED_ORIGINS.
  */
 import { Hono } from "hono";
-import { cors } from "hono/cors";
 import { PrismaClient } from "@prisma/client";
 import products from "./routes/products.js";
 import auth from "./routes/auth.js";
@@ -24,7 +23,7 @@ type Variables = {
 
 const app = new Hono<{ Bindings: Record<string, never>; Variables: Variables }>();
 
-// CORS first so preflight (OPTIONS) always gets headers before any other logic
+// CORS: handle preflight (OPTIONS) immediately so no other code can block or strip headers
 const defaultOrigins = [
   "http://localhost:8080",
   "http://localhost:5173",
@@ -36,19 +35,26 @@ app.use("*", async (c, next) => {
     ? originsRaw.split(",").map((o) => o.trim()).filter(Boolean)
     : [];
   const origins = allowedList.length > 0 ? allowedList : defaultOrigins;
-  const originFn = (origin: string) => {
-    if (!origin) return origins[0] ?? "*";
-    if (origins.includes(origin)) return origin;
-    // Any Cloudflare Pages origin
-    if (/^https:\/\/[\w.-]+\.pages\.dev$/i.test(origin)) return origin;
-    return origins[0] ?? "*";
+  const originHeader = c.req.header("Origin") ?? "";
+  const allowOrigin =
+    !originHeader ? origins[0] ?? "*"
+    : origins.includes(originHeader) ? originHeader
+    : /^https:\/\/[\w.-]+\.pages\.dev$/i.test(originHeader) ? originHeader
+    : origins[0] ?? "*";
+
+  const corsHeaders: Record<string, string> = {
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Methods": "GET, HEAD, PUT, POST, DELETE, PATCH, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Max-Age": "86400",
   };
-  return cors({
-    origin: originFn,
-    allowMethods: ["GET", "HEAD", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization"],
-    maxAge: 86400,
-  })(c, next);
+
+  if (c.req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
+  await next();
+  Object.entries(corsHeaders).forEach(([k, v]) => c.header(k, v));
 });
 
 app.use("*", async (c, next) => {
