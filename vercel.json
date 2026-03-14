@@ -4,5 +4,16 @@
   "outputDirectory": "dist",
   "env": {
     "NODEJS_HELPERS": "0"
-  }
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "https://shop-5ns.pages.dev" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, HEAD, PUT, POST, DELETE, PATCH, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" },
+        { "key": "Access-Control-Max-Age", "value": "86400" }
+      ]
+    }
+  ]
 }
