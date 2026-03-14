@@ -31,8 +31,18 @@ app.use("*", async (c, next) => {
 
 app.use("*", async (c, next) => {
   const originsRaw = getAllowedOrigins(c);
-  const origins = originsRaw?.split(",") || ["http://localhost:8080", "http://localhost:5173"];
-  return cors({ origin: origins })(c, next);
+  const allowedList = originsRaw
+    ? originsRaw.split(",").map((o) => o.trim()).filter(Boolean)
+    : [];
+  const defaultOrigins = ["http://localhost:8080", "http://localhost:5173"];
+  const origins = allowedList.length > 0 ? allowedList : defaultOrigins;
+  // Allow request origin if in list, or any Cloudflare Pages origin (*.pages.dev)
+  const originFn = (origin: string) => {
+    if (origins.includes(origin)) return origin;
+    if (/^https:\/\/[\w.-]+\.pages\.dev$/i.test(origin)) return origin;
+    return origins[0];
+  };
+  return cors({ origin: originFn })(c, next);
 });
 
 app.get("/api/health", (c) => {
