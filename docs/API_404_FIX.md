@@ -23,6 +23,10 @@ In the browser: **Sign up page** → open **Developer Tools (F12)** → **Networ
   - If this is a **different** Vercel project (frontend-only, no `api/` in that repo): that project has no API → **404**.  
   **Fix:** Set `VITE_API_ORIGIN` to the URL of the project that **does** have the API, then rebuild and redeploy the frontend (step 2).
 
+**Quick check:** Open **`https://your-vercel-app.vercel.app/api/health`** in the browser.  
+- If you see JSON like `{"status":"ok","from":"api/health.ts",...}` → the `api/` folder is deployed; the problem is likely the catch-all route for `/api/auth/register`.  
+- If you get **404** → the `api/` folder is not deployed: check **Root Directory** (must be repo root so `api/` is included) and redeploy.
+
 ---
 
 ## 2. Set the API base URL when frontend and API are on different hosts
