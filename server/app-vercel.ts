@@ -21,7 +21,15 @@ type Variables = {
   ALLOWED_ORIGINS?: string;
 };
 
-const app = new Hono<{ Bindings: Record<string, never>; Variables: Variables }>();
+// Normalize path for Vercel: request may arrive as /auth/register instead of /api/auth/register
+function getPath(req: Request): string {
+  const url = new URL(req.url);
+  const pathname = url.pathname;
+  if (pathname.startsWith("/api")) return pathname;
+  return "/api" + (pathname.startsWith("/") ? pathname : "/" + pathname);
+}
+
+const app = new Hono<{ Bindings: Record<string, never>; Variables: Variables }>({ getPath });
 
 // CORS: handle preflight (OPTIONS) immediately so no other code can block or strip headers
 const defaultOrigins = [
