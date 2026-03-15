@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "postinstall": "prisma generate",
+    "start": "tsx server/render.ts",
+    "start:server": "tsx server/render.ts",
     "dev": "vite",
     "build": "prisma generate && vite build",
     "build:dev": "vite build --mode development",
@@ -65,6 +67,7 @@
     "recharts": "^2.15.4",
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.6.0",
+    "tsx": "^4.21.0",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.9",
     "zod": "^3.25.76",
