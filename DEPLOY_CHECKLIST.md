@@ -1,7 +1,7 @@
-# Deploy checklist — Backend (Vercel or Render), Frontend on Cloudflare Pages
+# Deploy checklist — Backend (Vercel or Render), Frontend (Vercel or Cloudflare Pages)
 
 - **API (backend):** Vercel serverless **or** Render Web Service  
-- **Frontend:** Cloudflare Pages  
+- **Frontend:** Vercel (same project as API) **or** Cloudflare Pages  
 - **Database:** PostgreSQL (e.g. Neon, Supabase, Vercel Postgres)
 
 ---
@@ -49,7 +49,8 @@ Or run migrations on the hosted DB (e.g. Neon SQL editor or `prisma migrate depl
 - Go to [Render](https://render.com) → Dashboard → New → Web Service.
 - Connect your repo and select this project.
 - **Build command:** `npm install && npx prisma generate`
-- **Start command:** `npm run start:server`
+- **Start command:** **Must be exactly** `npm start` (or `npm run start:server`).  
+  **Do not leave it blank and do not use `npm run`** — otherwise Render runs `npm run` with no script name, the process only lists scripts and exits, and you’ll see “Application exited early”.
 - **Environment** (Environment Variables):
 
 | Name             | Value                                                                 |
@@ -63,7 +64,17 @@ Or run migrations on the hosted DB (e.g. Neon SQL editor or `prisma migrate depl
 
 **Optional:** Use the repo’s `render.yaml` (Blueprint) to create the service with the same settings.
 
-### 4. Frontend on Cloudflare Pages
+### 4a. Frontend on Vercel (same project as the API)
+
+When you deploy **this repo** to a single Vercel project, you get both the static frontend (`dist/`) and the API (`api/`) at the same domain (e.g. `https://your-project.vercel.app`).
+
+- **You do not need to set `VITE_API_ORIGIN`.** The app uses relative URLs (`/api/...`), so requests go to the same origin and hit your API.
+- In the same project **Settings → Environment variables**, set **ALLOWED_ORIGINS** to your Vercel URL so CORS allows the frontend, e.g. `https://your-project.vercel.app` (and add Preview URL if you use branch previews, e.g. `https://your-project-*.vercel.app` or the exact preview URL).
+- Build command and output are already set in `vercel.json`: build runs `prisma generate && vite build`, output is `dist`.
+
+One project = one deploy = frontend and API at `https://your-project.vercel.app` (and `/api/health`, `/api/auth/login`, etc.).
+
+### 4b. Frontend on Cloudflare Pages (or a different host)
 
 - **Cloudflare:** Workers & Pages → Create → Pages → Connect to Git (or Direct Upload). Project name e.g. `shop`.
 - In the Pages project **Settings → Build configuration**:
@@ -83,6 +94,9 @@ Push to the branch connected to Vercel, or run `vercel --prod` from the project 
 **API (Render)**  
 Push to the branch connected to Render; Render will rebuild and redeploy automatically.
 
+**Frontend (Vercel, same project)**  
+Push to the branch connected to Vercel; frontend and API redeploy together.
+
 **Frontend (Cloudflare Pages)**  
 Push to the branch connected to Pages, or build and upload:
 
@@ -96,9 +110,9 @@ npx wrangler pages deploy ./dist --project-name=shop
 
 ## After first deploy
 
-- **Frontend:** `https://shop.pages.dev` (or your custom domain).
+- **Frontend (Vercel):** `https://your-project.vercel.app` — or **(Pages):** `https://shop.pages.dev` (or your custom domain).
 - **API (Vercel):** `https://your-project.vercel.app/api` — or **(Render):** `https://your-service.onrender.com/api`.
-- Ensure `ALLOWED_ORIGINS` on your backend (Vercel or Render) includes your frontend URL so CORS works.
+- Ensure **ALLOWED_ORIGINS** on your backend includes your frontend URL so CORS works (e.g. your Vercel URL if frontend is on Vercel).
 
 ---
 

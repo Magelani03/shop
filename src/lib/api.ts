@@ -1,6 +1,6 @@
 import type { Product, Order, User } from "@/lib/store";
 
-/** In production, set VITE_API_ORIGIN to your Vercel app URL (e.g. https://your-project.vercel.app) so the frontend calls the right API. */
+/** Base URL for the API. Set VITE_API_ORIGIN at build time (e.g. in Cloudflare Pages / Vercel env) to your backend URL; otherwise requests go to the frontend origin and get 404. */
 const API_BASE = import.meta.env.VITE_API_ORIGIN ?? "";
 
 export interface ProductDto {
