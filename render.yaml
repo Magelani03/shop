@@ -1,0 +1,25 @@
+# Render Blueprint — backend Web Service
+# Docs: https://render.com/docs/blueprint-spec
+# Deploy: connect repo and use this blueprint, or create a Web Service manually with the same settings.
+
+services:
+  - type: web
+    name: shop-api
+    runtime: node
+    region: oregon
+
+    buildCommand: npm install && npx prisma generate
+    # Must be "npm start" (or "npm run start:server") — "npm run" alone only lists scripts and exits
+    startCommand: npm start
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: ADMIN_WHATSAPP
+        optional: true
