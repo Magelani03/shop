@@ -292,10 +292,14 @@ app.post("/orders/:id/whatsapp", async (c) => {
             return acc;
         }, {});
 
-        const whatsappNumber = settingsMap.admin_whatsapp;
+        const whatsappNumber = settingsMap.admin_whatsapp || process.env.ADMIN_WHATSAPP;
 
         if (!whatsappNumber) {
-            return c.json({ error: "WhatsApp number not configured" }, 400);
+            return c.json({
+                configured: false,
+                whatsappUrl: null,
+                error: "WhatsApp number not configured",
+            });
         }
 
         // Create WhatsApp message

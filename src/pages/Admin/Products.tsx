@@ -71,12 +71,17 @@ const AdminProducts = () => {
             <div className="max-w-7xl mx-auto space-y-6">
                 <div className="flex items-center justify-between">
                     <h1 className="font-display text-3xl font-bold">Manage Products</h1>
-                    <Link to="/admin/products/new">
-                        <Button className="bg-primary hover:bg-primary/90 rounded-full">
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Product
-                        </Button>
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Link to="/admin/dashboard">
+                            <Button variant="outline">Back to Dashboard</Button>
+                        </Link>
+                        <Link to="/admin/products/new">
+                            <Button className="bg-primary hover:bg-primary/90 rounded-full">
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Product
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
 
                 <Card>

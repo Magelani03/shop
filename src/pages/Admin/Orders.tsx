@@ -51,11 +51,23 @@ const AdminOrders = () => {
     };
 
     const handleWhatsApp = async (orderId: number) => {
+        const popup = window.open("", "_blank", "noopener,noreferrer");
         const url = await generateWhatsApp(orderId);
         if (url) {
-            window.open(url, "_blank");
+            if (popup) {
+                popup.location.href = url;
+            } else {
+                toast("Popup blocked", {
+                    description: "Click to open WhatsApp manually.",
+                    action: {
+                        label: "Open WhatsApp",
+                        onClick: () => window.open(url, "_blank", "noopener,noreferrer"),
+                    },
+                });
+            }
         } else {
-            toast.error("Failed to generate WhatsApp link");
+            if (popup) popup.close();
+            toast.info("WhatsApp not configured yet. Set admin_whatsapp in Admin Settings or ADMIN_WHATSAPP env var.");
         }
     };
 
