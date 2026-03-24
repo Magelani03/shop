@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useAdminStore, useAuthStore } from "@/lib/store";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import {
     Card,
     CardContent,
@@ -17,18 +17,25 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Eye } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 
 const AdminOrders = () => {
     const { user, isAdmin } = useAuthStore();
     const { orders, loading, fetchAdminOrders, updateOrderStatus, generateWhatsApp } = useAdminStore();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const search = searchParams.get("search") ?? "";
+    const status = searchParams.get("status") ?? "all";
 
     useEffect(() => {
         if (isAdmin()) {
-            fetchAdminOrders();
+            const filters: Record<string, string> = {};
+            if (search) filters.search = search;
+            if (status && status !== "all") filters.status = status;
+            fetchAdminOrders(filters);
         }
-    }, [fetchAdminOrders, isAdmin]);
+    }, [fetchAdminOrders, isAdmin, search, status]);
 
     if (!user || !isAdmin()) {
         return <Navigate to="/login" replace />;
@@ -69,7 +76,54 @@ const AdminOrders = () => {
             <div className="max-w-7xl mx-auto space-y-6">
                 <div className="flex items-center justify-between">
                     <h1 className="font-display text-3xl font-bold">Manage Orders</h1>
-                    <Button variant="outline" onClick={() => fetchAdminOrders()}>Refresh</Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => {
+                            const filters: Record<string, string> = {};
+                            if (search) filters.search = search;
+                            if (status && status !== "all") filters.status = status;
+                            fetchAdminOrders(filters);
+                        }}
+                    >
+                        Refresh
+                    </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <Input
+                        placeholder="Search by name / email / phone"
+                        value={search}
+                        onChange={(e) => {
+                            const next = new URLSearchParams(searchParams);
+                            if (e.target.value) next.set("search", e.target.value);
+                            else next.delete("search");
+                            setSearchParams(next);
+                        }}
+                    />
+                    <select
+                        className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                        value={status}
+                        onChange={(e) => {
+                            const next = new URLSearchParams(searchParams);
+                            if (e.target.value && e.target.value !== "all") next.set("status", e.target.value);
+                            else next.delete("status");
+                            setSearchParams(next);
+                        }}
+                    >
+                        <option value="all">All statuses</option>
+                        <option value="PENDING">PENDING</option>
+                        <option value="CONFIRMED">CONFIRMED</option>
+                        <option value="PROCESSING">PROCESSING</option>
+                        <option value="SHIPPED">SHIPPED</option>
+                        <option value="DELIVERED">DELIVERED</option>
+                        <option value="CANCELLED">CANCELLED</option>
+                    </select>
+                    <Button
+                        variant="secondary"
+                        onClick={() => setSearchParams(new URLSearchParams())}
+                    >
+                        Clear Filters
+                    </Button>
                 </div>
 
                 <Card>

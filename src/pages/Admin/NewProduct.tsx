@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useAuthStore, getAuthHeaders, type Product } from "@/lib/store";
-import { createProduct } from "@/lib/api";
+import { createProduct, getAdminProductById, updateProduct } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,11 +33,15 @@ const initialState: FormState = {
 };
 
 export default function NewProduct() {
+  const { id } = useParams();
+  const editingId = id ? Number(id) : null;
+  const isEditMode = Number.isInteger(editingId) && (editingId ?? 0) > 0;
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, isAdmin } = useAuthStore();
   const [form, setForm] = useState<FormState>(initialState);
   const [saving, setSaving] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(false);
   const [imageFileName, setImageFileName] = useState<string>("");
 
   const canSubmit = useMemo(() => {
@@ -73,6 +77,32 @@ export default function NewProduct() {
     return <Navigate to="/login" replace />;
   }
 
+  useEffect(() => {
+    if (!isEditMode || !editingId) return;
+    let mounted = true;
+    setInitialLoading(true);
+    getAdminProductById(editingId, getAuthHeaders())
+      .then((product) => {
+        if (!mounted || !product) return;
+        setForm({
+          name: product.name ?? "",
+          description: product.description ?? "",
+          category: product.category ?? "",
+          image: product.image ?? "",
+          price: String(product.price ?? ""),
+          stock: String(product.stock ?? "0"),
+          discount: product.discount !== undefined && product.discount !== null ? String(product.discount) : "",
+          featured: Boolean(product.featured),
+        });
+      })
+      .finally(() => {
+        if (mounted) setInitialLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [isEditMode, editingId]);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit || saving) return;
@@ -90,17 +120,19 @@ export default function NewProduct() {
         discount: form.discount.trim() ? Number(form.discount) : undefined,
       };
 
-      const created = await createProduct(payload, getAuthHeaders());
-      if (!created) {
+      const result = isEditMode && editingId
+        ? await updateProduct(editingId, payload, getAuthHeaders())
+        : await createProduct(payload, getAuthHeaders());
+      if (!result) {
         toast({
-          title: "Failed to create product",
+          title: isEditMode ? "Failed to update product" : "Failed to create product",
           description: "Please check your inputs and try again.",
           variant: "destructive",
         });
         return;
       }
 
-      toast({ title: "Product created" });
+      toast({ title: isEditMode ? "Product updated" : "Product created" });
       navigate("/admin/products");
     } catch (err) {
       console.error("Create product error:", err);
@@ -118,7 +150,7 @@ export default function NewProduct() {
     <div className="min-h-screen bg-muted/30 p-6">
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="font-display text-3xl font-bold">Add Product</h1>
+          <h1 className="font-display text-3xl font-bold">{isEditMode ? "Edit Product" : "Add Product"}</h1>
           <Button variant="outline" onClick={() => navigate("/admin/products")}>
             Back
           </Button>
@@ -129,6 +161,9 @@ export default function NewProduct() {
             <CardTitle>Product details</CardTitle>
           </CardHeader>
           <CardContent>
+            {initialLoading ? (
+              <div className="py-10 text-center text-muted-foreground">Loading product...</div>
+            ) : (
             <form className="space-y-5" onSubmit={onSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -283,10 +318,11 @@ export default function NewProduct() {
                   Reset
                 </Button>
                 <Button type="submit" disabled={!canSubmit || saving}>
-                  {saving ? "Saving..." : "Create product"}
+                  {saving ? "Saving..." : isEditMode ? "Save changes" : "Create product"}
                 </Button>
               </div>
             </form>
+            )}
           </CardContent>
         </Card>
       </div>
