@@ -1,10 +1,11 @@
 import { Hono } from "hono";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { Role, PrismaClient } from "@prisma/client";
+import { Prisma, Role, PrismaClient } from "@prisma/client";
+import { ZodError } from "zod";
 import { loginSchema, registerSchema } from "../schemas/index.js";
 import { authenticateToken } from "../middleware/auth.js";
-import { getJwtSecret } from "../env.js";
+import { jwtSecretForSigning } from "../env.js";
 
 type Bindings = {
     DB?: unknown;
@@ -36,7 +37,11 @@ app.post("/login", async (c) => {
             return c.json({ error: "Invalid credentials" }, 401);
         }
 
-        const token = jwt.sign({ userId: user.id }, getJwtSecret(c), {
+        const jwtCfg = jwtSecretForSigning(c);
+        if (!jwtCfg.ok) {
+            return c.json({ error: jwtCfg.error }, 503);
+        }
+        const token = jwt.sign({ userId: user.id }, jwtCfg.secret, {
             expiresIn: "7d",
         });
 
@@ -55,6 +60,9 @@ app.post("/login", async (c) => {
         });
     } catch (error: unknown) {
         console.error("Login error:", error);
+        if (error instanceof ZodError) {
+            return c.json({ error: "Invalid input", details: error.flatten() }, 400);
+        }
         const msg = error instanceof Error ? error.message : String(error);
         if (msg.includes("does not exist") || msg.includes("no such table")) {
             return c.json({ error: "Database not set up. Run: npx prisma migrate dev && npx prisma db seed" }, 503);
@@ -92,7 +100,11 @@ app.post("/register", async (c) => {
         const count = await prisma.user.count();
         console.log("Total users in this DB session:", count);
 
-        const token = jwt.sign({ userId: user.id }, getJwtSecret(c), {
+        const jwtCfg = jwtSecretForSigning(c);
+        if (!jwtCfg.ok) {
+            return c.json({ error: jwtCfg.error }, 503);
+        }
+        const token = jwt.sign({ userId: user.id }, jwtCfg.secret, {
             expiresIn: "7d",
         });
 
@@ -111,18 +123,57 @@ app.post("/register", async (c) => {
         });
     } catch (error: unknown) {
         console.error("Registration error:", error);
+        if (error instanceof ZodError) {
+            return c.json({ error: "Invalid input", details: error.flatten() }, 400);
+        }
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            if (error.code === "P2002") {
+                const target = (error.meta?.target as string[] | undefined)?.join(", ");
+                return c.json(
+                    {
+                        error: target?.includes("email")
+                            ? "Email already registered"
+                            : "This value is already in use",
+                    },
+                    400,
+                );
+            }
+        }
         const msg = error instanceof Error ? error.message : String(error);
         if (msg.includes("does not exist") || msg.includes("no such table")) {
             return c.json({ error: "Database not set up. Run: npx prisma migrate dev && npx prisma db seed" }, 503);
         }
-        return c.json({ error: "Internal server error" }, 500);
+        if (
+            msg.includes("DATABASE_URL") ||
+            msg.includes("P1001") ||
+            msg.includes("Can't reach database") ||
+            msg.includes("PrismaClientInitializationError") ||
+            msg.includes("Server has closed the connection")
+        ) {
+            return c.json({ error: "Database not configured. Check DATABASE_URL in .env and restart the API server." }, 503);
+        }
+        if (msg.includes("secret") && msg.includes("JWT")) {
+            return c.json(
+                { error: "JWT signing failed. Set JWT_SECRET in .env (at least 8 characters)." },
+                503,
+            );
+        }
+        const expose =
+            process.env.NODE_ENV !== "production" && error instanceof Error ? error.message : null;
+        return c.json(
+            {
+                error: expose ? `Registration failed: ${expose}` : "Internal server error",
+            },
+            500,
+        );
     }
 });
 
-// Authenticated user profile routes
-app.use("/me/*", authenticateToken);
+// Authenticated user profile routes — `/me/*` does NOT match `/me` in Hono; use a sub-app so GET/PUT /me are protected.
+const meRoutes = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+meRoutes.use("*", authenticateToken);
 
-app.get("/me", async (c) => {
+meRoutes.get("/", async (c) => {
     const user = c.get("user");
 
     return c.json({
@@ -139,7 +190,7 @@ app.get("/me", async (c) => {
     });
 });
 
-app.put("/me", async (c) => {
+meRoutes.put("/", async (c) => {
     try {
         const prisma = c.get("prisma");
         const currentUser = c.get("user");
@@ -173,5 +224,7 @@ app.put("/me", async (c) => {
         return c.json({ error: "Failed to update profile" }, 500);
     }
 });
+
+app.route("/me", meRoutes);
 
 export default app;

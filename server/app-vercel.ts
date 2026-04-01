@@ -9,6 +9,7 @@ import auth from "./routes/auth.js";
 import orders from "./routes/orders.js";
 import settings from "./routes/settings.js";
 import admin from "./routes/admin.js";
+import contact from "./routes/contact.js";
 
 // Singleton for serverless (avoid connection pool exhaustion)
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
@@ -34,9 +35,21 @@ const app = new Hono<{ Bindings: Record<string, never>; Variables: Variables }>(
 // CORS: handle preflight (OPTIONS) immediately so no other code can block or strip headers
 const defaultOrigins = [
   "http://localhost:8080",
+  "http://localhost:8081",
   "http://localhost:5173",
   "https://shop-5ns.pages.dev",
 ];
+
+/** Allow phone / LAN dev URLs (e.g. http://192.168.x.x:8081) when not in production. */
+function isLanOrLocalDevOrigin(origin: string): boolean {
+  if (process.env.NODE_ENV === "production") {
+    return false;
+  }
+  return /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d+)?$/i.test(
+    origin,
+  );
+}
+
 app.use("*", async (c, next) => {
   const originsRaw = process.env.ALLOWED_ORIGINS ?? "";
   const allowedList = originsRaw
@@ -48,6 +61,7 @@ app.use("*", async (c, next) => {
     !originHeader ? origins[0] ?? "*"
     : origins.includes(originHeader) ? originHeader
     : /^https:\/\/[\w.-]+\.pages\.dev$/i.test(originHeader) ? originHeader
+    : isLanOrLocalDevOrigin(originHeader) ? originHeader
     : origins[0] ?? "*";
 
   const corsHeaders: Record<string, string> = {
@@ -81,5 +95,6 @@ app.route("/api/auth", auth);
 app.route("/api/orders", orders);
 app.route("/api/settings", settings);
 app.route("/api/admin", admin);
+app.route("/api/contact", contact);
 
 export default app;

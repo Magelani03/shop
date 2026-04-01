@@ -9,7 +9,14 @@ export const registerSchema = z.object({
     name: z.string().min(2),
     email: z.string().email(),
     password: z.string().min(6),
-    phone: z.string().optional(),
+    phone: z
+        .union([z.string(), z.null()])
+        .optional()
+        .transform((v) => {
+            if (v == null) return undefined;
+            const t = v.trim();
+            return t === "" ? undefined : t;
+        }),
 });
 
 export const orderItemSchema = z.object({
@@ -26,6 +33,15 @@ export const createOrderSchema = z.object({
     }),
     shippingAddress: z.string().min(10),
     notes: z.string().optional(),
+});
+
+export const contactWhatsAppSchema = z.object({
+    name: z.string().min(1).max(200),
+    email: z.string().email(),
+    phone: z.string().max(40).optional(),
+    subject: z.string().min(1).max(300),
+    message: z.string().min(1).max(1500),
+    inquiryType: z.enum(["general", "complaint", "question"]).optional(),
 });
 
 export const productSchema = z.object({
