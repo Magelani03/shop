@@ -14,7 +14,6 @@ import {
   Instagram,
 } from "lucide-react";
 import Hero from "@/components/home/Hero";
-import BrandValues from "@/components/home/BrandValues";
 import heroProducts from "@/assets/products/hero-products.png";
 import serumNew from "@/assets/products/serum-new.jpg";
 import skincareSet from "@/assets/products/skincare-set.jpg";
@@ -41,7 +40,6 @@ const Index = () => {
   return (
     <Layout>
       <Hero />
-      <BrandValues />
 
       {/* Product Categories */}
       <section className="py-20 bg-gradient-to-b from-white to-sage-light/30">
