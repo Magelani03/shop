@@ -3,6 +3,7 @@
  * Uses the same Hono app as Vercel (app-vercel.ts).
  * Set PORT (Render sets this), DATABASE_URL, JWT_SECRET, ALLOWED_ORIGINS.
  */
+import "dotenv/config";
 import { serve } from "@hono/node-server";
 import app from "./app-vercel.js";
 

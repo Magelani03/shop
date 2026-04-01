@@ -200,27 +200,36 @@ export const useAuthStore = create<AuthStore>()(
         password: string,
         phone?: string,
       ) => {
+        const response = await fetch(`${API_BASE}/api/auth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            email,
+            password,
+            phone: phone?.trim() || undefined,
+          }),
+        });
+        const text = await response.text();
+        let data: { token?: string; user?: User; error?: string } = {};
         try {
-          const response = await fetch(`${API_BASE}/api/auth/register`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, email, password, phone }),
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            set({
-              token: data.token,
-              user: data.user,
-              isAuthenticated: true,
-            });
-            return true;
-          }
-          return false;
-        } catch (error) {
-          console.error("Registration error:", error);
-          return false;
+          data = text ? (JSON.parse(text) as typeof data) : {};
+        } catch {
+          throw new Error(
+            "Invalid response from server. Run the API in another terminal: npm run dev:server (default port 3000 must match Vite’s /api proxy).",
+          );
         }
+        if (response.ok && data.token && data.user) {
+          set({
+            token: data.token,
+            user: data.user,
+            isAuthenticated: true,
+          });
+          return true;
+        }
+        throw new Error(
+          typeof data.error === "string" ? data.error : "Registration failed",
+        );
       },
 
       logout: () => {
@@ -229,8 +238,8 @@ export const useAuthStore = create<AuthStore>()(
           user: null,
           isAuthenticated: false,
         });
-        // Clear cart on logout
         useCartStore.getState().clearCart();
+        useOrderStore.setState({ orders: [], currentOrder: null, loading: false });
       },
 
       setAuth: (token: string, user: User) => {
@@ -254,6 +263,28 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: "auth-storage",
+      /**
+       * Default persist merge is `{ ...current, ...persisted }`, so a late rehydration can overwrite
+       * a brand-new login with stale localStorage. Prefer the in-memory session when tokens/users differ.
+       */
+      merge: (persistedState, currentState) => {
+        const p = (persistedState ?? {}) as Partial<AuthStore>;
+        const c = currentState as AuthStore;
+        const merged = { ...c, ...p };
+        if (
+          c.token &&
+          c.user &&
+          (p.token !== c.token || p.user?.id !== c.user?.id)
+        ) {
+          return {
+            ...merged,
+            token: c.token,
+            user: c.user,
+            isAuthenticated: !!c.isAuthenticated,
+          };
+        }
+        return merged;
+      },
     },
   ),
 );

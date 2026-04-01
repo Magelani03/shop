@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { updateProfile } from "@/lib/api";
+import { getCurrentUser, updateProfile } from "@/lib/api";
 
 const Profile = () => {
   const user = useAuthStore((state) => state.user);
@@ -41,10 +41,33 @@ const Profile = () => {
       .slice(0, 2)
       .toUpperCase() || "U";
 
+  // Keep form fields in sync when the logged-in user changes (different account / session).
   useEffect(() => {
-    // Fetch orders once when the profile mounts
-    useOrderStore.getState().fetchUserOrders();
-  }, []);
+    setFormData({
+      name: user.name || "",
+      email: user.email || "",
+      phone: user.phone || "",
+      address: user.address || "",
+      city: user.city || "",
+      avatar: user.avatar || "",
+    });
+  }, [user.id, user.email, user.name, user.phone, user.address, user.city, user.avatar]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const fresh = await getCurrentUser(getAuthHeaders());
+      if (!cancelled && fresh) {
+        useAuthStore.getState().updateUser(fresh);
+      }
+      if (!cancelled) {
+        await useOrderStore.getState().fetchUserOrders();
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement>,

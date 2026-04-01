@@ -27,20 +27,20 @@ const SignUp = () => {
 
     setLoading(true);
     try {
-      const success = await register(
+      await register(
         formData.name,
         formData.email,
         formData.password,
         formData.phone,
       );
-      if (success) {
-        toast.success("Account created successfully!");
-        navigate("/");
-      } else {
-        toast.error("Failed to create account. Please try again.");
-      }
+      toast.success("Account created successfully!");
+      navigate("/");
     } catch (error) {
-      toast.error("Registration failed. Please try again.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Registration failed. Please try again.",
+      );
     } finally {
       setLoading(false);
     }

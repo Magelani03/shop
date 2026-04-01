@@ -157,6 +157,21 @@ export async function register(
   return await res.json();
 }
 
+export async function getCurrentUser(
+  authHeaders: Record<string, string>,
+): Promise<User | null> {
+  const res = await fetch(`${API_BASE}/api/auth/me`, {
+    headers: {
+      ...authHeaders,
+    },
+  });
+  if (!res.ok) {
+    return null;
+  }
+  const data = (await res.json()) as { user: User };
+  return data.user;
+}
+
 export async function updateProfile(
   profileData: {
     name?: string;
@@ -228,6 +243,58 @@ export async function getOrderWhatsAppUrl(
   }
 
   return await res.json();
+}
+
+export type ContactInquiryType = "general" | "complaint" | "question";
+
+/** Parse JSON bodies; if the server returns HTML (e.g. 404 from Vite), throw a clear error. */
+async function readJsonFromResponse(res: Response): Promise<Record<string, unknown>> {
+  const text = await res.text();
+  if (!text.trim()) {
+    return {};
+  }
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    const hint =
+      res.status === 404
+        ? "API route not found. Start the backend (e.g. npm run dev:server) and ensure Vite proxies /api to the same port (default API: 3000)."
+        : `Unexpected response (${res.status}). Is the API running and DATABASE_URL set?`;
+    throw new Error(hint);
+  }
+}
+
+export async function postContactWhatsApp(payload: {
+  name: string;
+  email: string;
+  phone?: string;
+  subject: string;
+  message: string;
+  inquiryType?: ContactInquiryType;
+}): Promise<{
+  configured: boolean;
+  whatsappUrl: string | null;
+  error?: string;
+  message?: string;
+}> {
+  const res = await fetch(`${API_BASE}/api/contact/whatsapp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await readJsonFromResponse(res);
+  if (!res.ok) {
+    throw new Error(
+      typeof data.error === "string" ? data.error : "Failed to open WhatsApp",
+    );
+  }
+  return data as {
+    configured: boolean;
+    whatsappUrl: string | null;
+    error?: string;
+    message?: string;
+  };
 }
 
 export async function getUserOrders(
