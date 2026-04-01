@@ -286,6 +286,22 @@ export async function getAdminProducts(
   return data.map(mapProduct);
 }
 
+export async function getAdminProductById(
+  id: number,
+  authHeaders: Record<string, string>,
+): Promise<Product | null> {
+  const res = await fetch(`${API_BASE}/api/admin/products/${id}`, {
+    headers: authHeaders,
+  });
+
+  if (!res.ok) {
+    return null;
+  }
+
+  const data = (await res.json()) as ProductDto;
+  return mapProduct(data);
+}
+
 export async function createProduct(
   productData: Partial<Product>,
   authHeaders: Record<string, string>,

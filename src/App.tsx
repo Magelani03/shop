@@ -20,6 +20,7 @@ import AdminOrders from "./pages/Admin/Orders";
 import AdminProducts from "./pages/Admin/Products";
 import AdminUsers from "./pages/Admin/Users";
 import Analytics from "./pages/Admin/Analytics";
+import NewProduct from "./pages/Admin/NewProduct";
 import AuthModal from "./components/AuthModal";
 import CartDrawer from "./components/CartDrawer";
 
@@ -51,7 +52,8 @@ const App = () => (
           <Route path="/admin/dashboard" element={<Dashboard />} />
           <Route path="/admin/orders" element={<AdminOrders />} />
           <Route path="/admin/products" element={<AdminProducts />} />
-          <Route path="/admin/products/new" element={<AdminProducts />} />
+          <Route path="/admin/products/new" element={<NewProduct />} />
+          <Route path="/admin/products/:id/edit" element={<NewProduct />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/analytics" element={<Analytics />} />
 

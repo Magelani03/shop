@@ -98,6 +98,21 @@ app.get("/products", async (c) => {
     }
 });
 
+app.get("/products/:id", async (c) => {
+    try {
+        const prisma = c.get('prisma');
+        const id = parseInt(c.req.param("id"));
+        const product = await prisma.product.findUnique({ where: { id } });
+        if (!product) {
+            return c.json({ error: "Product not found" }, 404);
+        }
+        return c.json(product);
+    } catch (error) {
+        console.error("Error fetching product:", error);
+        return c.json({ error: "Failed to fetch product" }, 500);
+    }
+});
+
 app.post("/products", async (c) => {
     try {
         const prisma = c.get('prisma');
@@ -277,10 +292,14 @@ app.post("/orders/:id/whatsapp", async (c) => {
             return acc;
         }, {});
 
-        const whatsappNumber = settingsMap.admin_whatsapp;
+        const whatsappNumber = settingsMap.admin_whatsapp || process.env.ADMIN_WHATSAPP;
 
         if (!whatsappNumber) {
-            return c.json({ error: "WhatsApp number not configured" }, 400);
+            return c.json({
+                configured: false,
+                whatsappUrl: null,
+                error: "WhatsApp number not configured",
+            });
         }
 
         // Create WhatsApp message

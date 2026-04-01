@@ -60,15 +60,27 @@ const Checkout = () => {
             const order = await createOrder(orderData, authHeaders);
 
             if (order) {
+                const popup = window.open('', '_blank', 'noopener,noreferrer');
                 // Get WhatsApp URL and open it so the customer can send the order to the seller
                 const whatsappData = await getOrderWhatsAppUrl(order.id, authHeaders);
 
                 if (whatsappData?.whatsappUrl) {
                     toast.success('Order saved! Opening WhatsApp…');
-                    window.open(whatsappData.whatsappUrl, '_blank');
+                    if (popup) {
+                        popup.location.href = whatsappData.whatsappUrl;
+                    } else {
+                        toast('Popup blocked', {
+                            description: 'Click to open WhatsApp manually.',
+                            action: {
+                                label: 'Open WhatsApp',
+                                onClick: () => window.open(whatsappData.whatsappUrl, '_blank', 'noopener,noreferrer'),
+                            },
+                        });
+                    }
                     clearCart();
                     navigate('/profile');
                 } else {
+                    if (popup) popup.close();
                     toast.success('Order saved. WhatsApp is not configured—check your order in Profile.');
                     clearCart();
                     navigate('/profile');

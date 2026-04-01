@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { useAdminStore, useAuthStore } from "@/lib/store";
+import { useEffect, useState } from "react";
+import { useAdminStore, useAuthStore, getAuthHeaders } from "@/lib/store";
 import { Navigate, Link } from "react-router-dom";
 import {
     Card,
@@ -18,10 +18,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit2, Trash2 } from "lucide-react";
+import { deleteProduct } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 const AdminProducts = () => {
     const { user, isAdmin } = useAuthStore();
     const { products, loading, fetchAdminProducts } = useAdminStore();
+    const { toast } = useToast();
+    const [deletingId, setDeletingId] = useState<number | null>(null);
 
     useEffect(() => {
         if (isAdmin()) {
@@ -33,17 +37,51 @@ const AdminProducts = () => {
         return <Navigate to="/login" replace />;
     }
 
+    async function onDelete(id: number, name: string) {
+        const ok = window.confirm(`Delete "${name}"? This cannot be undone.`);
+        if (!ok) return;
+
+        setDeletingId(id);
+        try {
+            const success = await deleteProduct(id, getAuthHeaders());
+            if (!success) {
+                toast({
+                    title: "Delete failed",
+                    description: "Could not delete the product.",
+                    variant: "destructive",
+                });
+                return;
+            }
+            toast({ title: "Product deleted" });
+            await fetchAdminProducts();
+        } catch (err) {
+            console.error("Delete product error:", err);
+            toast({
+                title: "Delete failed",
+                description: "Server error. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setDeletingId(null);
+        }
+    }
+
     return (
         <div className="min-h-screen bg-muted/30 p-6">
             <div className="max-w-7xl mx-auto space-y-6">
                 <div className="flex items-center justify-between">
                     <h1 className="font-display text-3xl font-bold">Manage Products</h1>
-                    <Link to="/admin/products/new">
-                        <Button className="bg-primary hover:bg-primary/90 rounded-full">
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Product
-                        </Button>
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Link to="/admin/dashboard">
+                            <Button variant="outline">Back to Dashboard</Button>
+                        </Link>
+                        <Link to="/admin/products/new">
+                            <Button className="bg-primary hover:bg-primary/90 rounded-full">
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Product
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
 
                 <Card>
@@ -94,10 +132,18 @@ const AdminProducts = () => {
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex items-center justify-end gap-2">
-                                                        <Button variant="ghost" size="sm">
-                                                            <Edit2 className="h-4 w-4" />
-                                                        </Button>
-                                                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                                                        <Link to={`/admin/products/${product.id}/edit`}>
+                                                            <Button variant="ghost" size="sm">
+                                                                <Edit2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </Link>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="text-destructive hover:text-destructive"
+                                                            disabled={deletingId === product.id}
+                                                            onClick={() => onDelete(product.id, product.name)}
+                                                        >
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
                                                     </div>

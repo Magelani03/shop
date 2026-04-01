@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useAdminStore, useAuthStore } from "@/lib/store";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import {
     Card,
     CardContent,
@@ -91,9 +91,11 @@ const AdminUsers = () => {
                                                     {new Date(u.createdAt).toLocaleDateString()}
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                    <Button variant="ghost" size="sm">
-                                                        View Orders
-                                                    </Button>
+                                                    <Link to={`/admin/orders?search=${encodeURIComponent(u.email)}`}>
+                                                        <Button variant="ghost" size="sm">
+                                                            View Orders
+                                                        </Button>
+                                                    </Link>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
